@@ -1,0 +1,1 @@
+"test_level" setting for Levels is LEVELS\LEVELS.TXT seems to make them unloadable and crashes the game.
