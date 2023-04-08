@@ -8,7 +8,7 @@ Also heres a video that explains how to use these tools just be sure to follow t
 https://www.youtube.com/watch?v=_EQ3hPrh0V8
 
 
-`Links:
+`Links:`
   The Cutting room floor: https://tcrf.net/LEGO_City_Undercover_(Windows)
-  LCU Modding Channel (This is not me but a really cool person): https://www.youtube.com/@lcumodding9503`
+  LCU Modding Channel (This is not me but a really cool person): https://www.youtube.com/@lcumodding9503
   
