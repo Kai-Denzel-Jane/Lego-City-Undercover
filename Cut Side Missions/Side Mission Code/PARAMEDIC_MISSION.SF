@@ -1,0 +1,718 @@
+//  PARAMEDIC PANIC!
+//  This script runs in the background and waits for the player to enter the special Ambulance.
+//  Once they're in it, it activates the first build-it, and sticks on the destination glow thing, sets the sat-nav up and gets boogeying.
+//  Once the player arrives in the destination area it turns off the indicator and satnav and just waits for the build-it to be finished (via an AI message).
+//  It will reenable the indicator and satnav for the current destination if the player strays out of a much larger area.
+//  If the player stops before the parking area, then we should also switch off the parking indicator if they approach the buildit, otherwise it looks odd.
+//  The mission will ONLY be abandoned if the player enters a non-ambulance. There's no time-out other than the one which the game itself handles. We'll need to get feedback from that, mind, so we can reset stuff.
+
+HotSpot hMissionStart("");
+
+Timer scripttimer(0);
+Timer missionTimer(0);
+Character cPlayer1("player1");
+Character cPlayer2("player2");
+Character cMissionPlayer;
+Vehicle cAmbulance;
+Character cPatient;
+
+Locator lVehicleSpawn("");						// Mission vehicle spawn locator
+
+Text tVehicleType("Ambulance");										// Mission vehicle type
+	
+// Decleration strings
+Text tSatNavLocator("BM_Medic_SFR_01_Patient");										// Locator for satnav prefix
+Text tHotSpot("BM_Medic_SFR_01_HS");					// Hotspot prefix
+Text tGizmoBuildit("iMinifig_BusinessMan");										// Buildit name prefix
+Text tScript("KillOffScreen");													// Script assigned to pedestrian
+Text tType("NPC_BusinessMan");														// Type of character spawned
+
+
+// Debug message strings
+Text tReleaseScript("KillOffScreen");
+
+
+
+Text tReturnState("");  // State the mission returns to
+
+
+
+WorldLevel wlCity ("Lego_City");
+WorldLevel wlMissionStart ("SF_Residential_0922");
+WorldLevel wlPatient01 ("SF_Residential_0921");
+WorldLevel wlPatient02 ("SF_Residential_0919");
+WorldLevel wlPatient03 ("SF_Residential_1021");
+WorldLevel wlPatient04 ("SF_Residential_0921");
+WorldLevel wlPatient05 ("SF_Residential_0922");
+WorldLevel wlCurrentTile("Lego_City");
+
+Number nStage(1);
+Number nMaxStage(2); // Number of patients to see
+Number nMaxDistance(8); // Max distance allowed from patient is 8 units
+Number nAbandonTime(20); // Abandon time of 15 seconds
+Number nMaxTime(600); // Set time given for mission to be 10 minutes
+Number nHeroMax(5000);
+Number nBuilditAward(2500);
+
+Number nAbortDistance(8);		// Distance from vehicle the mission will be aborted.
+Number nReturnToPatientDistance(4); // Distance from patient when prompt is given.
+
+// Number nMaxTime(6); // Set time given for mission to be 10 minutes
+Global Locator gLocKillMoveTo(""); 
+
+// Objective OBJ_Abort("Abort_Check");
+
+
+// Setup the hotspot based on the nStage
+Function ActivateHotspot( Number n )
+{	
+	HotSpot h(tHotSpot + n.ToText("int 2"));
+	h.SetActive(true);
+	h.ScriptResponse("ForceBreak");	
+};
+
+// Function to force the Ambulance to break whenever they enter a hotspot
+Function ForceBreak( )
+{
+	cAmbulance.SetParked(true);
+};
+
+// Function to remove hotspot in case it wasn't triggered 
+Function RemoveHotspot( Number n )
+{	
+	HotSpot h(tHotSpot + n.ToText("int 2"));
+	h.SetActive(false);
+};
+
+// Function to govern tile loading
+Function SetTile()
+{
+	if (nStage == 1)
+	{
+		wlCurrentTile = wlPatient01;
+	}
+	elseif (nStage == 2)
+	{
+		wlCurrentTile = wlPatient02;
+	}
+	elseif (nStage == 3)
+	{
+		wlCurrentTile = wlPatient03;
+	}
+	elseif (nStage == 4)
+	{
+		wlCurrentTile = wlPatient04;
+	}
+	elseif (nStage == 5)
+	{
+		wlCurrentTile = wlPatient05;
+	};
+};
+
+/////////////////////////////////////////////////////////////////
+// Level Load
+/////////////////////////////////////////////////////////////////
+Function LevelEnter (WorldLevel level)
+{
+	if (!cPlayer1)
+	{
+		cPlayer1 = "player1";
+	};
+		
+	if (!cPlayer2)
+	{
+		cPlayer1 = "player2";
+	};
+};
+
+/////////////////////////////////////////////////////////////////////////////////
+////  SETUP STAGE
+/////////////////////////////////////////////////////////////////////////////////
+
+
+State Setup( )
+{
+	Conditions
+	{
+		if ( wlCity.IsLoaded() )
+		{
+			goto EnableHotspot();
+		};
+	};	
+	Actions
+	{
+	};
+};
+
+
+State EnableHotspot()
+{
+	Conditions
+	{
+	};	
+	Actions
+	{
+		hMissionStart = "BM_Medic_SFR_01_Start";
+
+		lVehicleSpawn = "BM_Medic_SFR_01_SpawnAmbulance";						// Mission vehicle spawn locator
+		// [NOTE: stuff done here must be un-done in Cleanup()]
+		
+		hMissionStart.SetHaloVisible(false);
+		hMissionStart.SetIcon("Bonus");
+		hMissionStart.SetActive(true);
+		hMissionStart.NoCondition();
+		goto WaitForReturnToTile();
+	};
+};
+
+
+// Wait for the player to be in the tile
+State WaitForReturnToTile()
+{
+	Conditions
+	{
+		if( wlMissionStart.IsLoaded() ) 
+		{ 
+			if ( cAmbulance ) 
+			{ 
+				if ( cPlayer1.GetVehicle() != cAmbulance )
+				{
+					cAmbulance.Destroy();	
+					cAmbulance = "";						
+				};
+			};
+			goto WaitForPlayerInVehicle(); 
+		};
+	};
+	Actions
+	{
+		// OBJ_Abort.Release();
+	};	
+};
+
+
+// Activate, then await the player to enter the taxi.
+State WaitForPlayerInVehicle()
+{
+	Text tPrompt("MISSION_PARAMEDIC_CHARACTER_PROMPT");
+	Bool bPrompt(false); // Number used for latching character prompt
+	Bool bPromptSecondPlayer(false);
+	Bool bNoTargetSet(false);
+	Gizmo gCharacterPickup("c_ParamedicCharkit");
+	Number nDistance(1.5);
+	Conditions
+	{
+//		 Check to see if the player enters the mission's vehicle		
+		if ( wlCity.IsLoaded() )
+		{
+			if ( cAmbulance )
+			{
+				if( cPlayer1.GetVehicle( ) == cAmbulance ) 
+				{ 
+					if (MissionFocus(cPlayer1))
+					{
+						cMissionPlayer = cPlayer1;
+						goto GiveMissionPrompts(); 
+					};
+				};	
+				
+				if( cPlayer2.GetVehicle( ) == cAmbulance ) 
+				{ 
+					if (MissionFocus(cPlayer2))
+					{
+						cMissionPlayer = cPlayer2;
+						goto GiveMissionPrompts(); 
+					};
+				};	
+			};
+			
+			if( !wlMissionStart.IsLoaded()  ) { goto WaitForReturnToTile(); };
+			
+			if ( gCharacterPickup.GetOutput(0)  AND  !Mission_IsFlagSet(#characterUnlocked) )
+			{
+				Mission_SetFlag( #characterUnlocked, true );
+				
+				if ( cAmbulance )
+				{
+					if (cPlayer1.DistanceToXZ(cAmbulance) < nDistance)
+					{
+						UI_RemoveMissionHelpText(cPlayer1);					
+					};
+					
+					if (cPlayer2.DistanceToXZ(cAmbulance) < nDistance)
+					{
+						UI_RemoveMissionHelpText(cPlayer2); 					
+					};
+				};
+				
+				cAmbulance.SetLocked(false);	//  RE-ENABLE ONCE SETTAGGABLE WORKS
+				bNoTargetSet = false;
+
+			};
+			
+			if ( cAmbulance  AND  !Mission_IsFlagSet(#characterUnlocked) ) //  checks to see if the taxi exists and the mission value has yet to be flagged as true.
+			{
+				if ( cPlayer1.DistanceToXZ(cAmbulance) < nDistance  AND  !bPrompt )
+				{					
+					UI_SetMissionHelpText(tPrompt, 6, cPlayer1 );
+					bPrompt = true;		
+				}
+				elseif ( cPlayer1.DistanceToXZ(cAmbulance) > nDistance  AND  bPrompt )
+				{					
+					UI_RemoveMissionHelpText(cPlayer1); 
+					bPrompt = false;
+				};
+				
+				if ( cPlayer2.DistanceToXZ(cAmbulance) < nDistance  AND  !bPromptSecondPlayer )
+				{
+					bPromptSecondPlayer = true;
+					UI_SetMissionHelpText(tPrompt, 6, cPlayer2 );
+				}
+				elseif ( cPlayer2.DistanceToXZ(cAmbulance) > nDistance  AND  bPromptSecondPlayer )
+				{
+					bPromptSecondPlayer = false;
+					UI_RemoveMissionHelpText(cPlayer2);
+				};					
+			};			
+			
+		};
+	};
+	Actions	
+	{	
+		// OBJ_Abort.Prepare();
+		UI_LoadMissionPrompt("Hud_Mission_Bonus_Ambulance"); 
+		if ( !cAmbulance )
+		{
+			Number nDirection(0);
+			nDirection = lVehicleSpawn.GetDirection();
+			cAmbulance = CreateAIVehicle( tVehicleType, "Emergency", lVehicleSpawn, nDirection );
+			wait(0);
+			cAmbulance.SetParked(true);	
+			Wait();
+			if ( !Mission_IsFlagSet(#characterUnlocked) )
+			{
+				cAmbulance.SetLocked(true);  //  RE-ENABLE ONCE SETTAGGABLE WORKS
+			};			
+		};		
+
+		
+	};
+};
+
+
+// Checks to see if the player starts the mission or not - handles accepting the mission
+State GiveMissionPrompts()
+{
+	Conditions
+	{
+//		 Gets out of the vehicle before pressing LB to initiate mission...
+		if( cMissionPlayer.GetVehicle( ) != cAmbulance ) 
+		{ 
+			cAmbulance.SetParked(false);	
+			UI_HideMissionPrompt();	
+			MissionUnfocus();
+			StreamedCharacterRelease("Mission_Paramedic");			
+			goto WaitForPlayerInVehicle(); 
+		};
+
+		if( PlayerPressedButton(cMissionPlayer, "A") ) 
+		{ 			
+			if ( cPlayer1 == cMissionPlayer )
+			{
+				PlayerSetCharacter( 1, "Mission_Paramedic");
+			}
+			else
+			{
+				PlayerSetCharacter( 2, "Mission_Paramedic");
+			};
+			
+			MissionActivate();  // START THE MISSION!			
+		};
+	};
+	Actions
+	{
+		UI_ShowMissionPrompt("Hud_Mission_Bonus_Ambulance", "MISSION_INSTRUCTIONS_PARAMEDIC", "MISSION_PROMPT", "MISSION_TITLE_PARAMEDIC");	
+		nStage = 1;
+		StreamedCharacterPreLoad("Mission_Paramedic");
+	};
+};
+
+
+
+
+/////////////////////////////////////////////////////////////////////////////////
+////// CLEANUP
+/////////////////////////////////////////////////////////////////////////////////
+
+state Cleanup()
+{
+	Actions
+	{
+		if ( cAmbulance ) 
+		{
+			cAmbulance.Destroy();
+			cAmbulance = "";
+		};
+		
+		if ( wlCity.IsLoaded() )
+		{
+			Number n(1);
+			Gizmo gBuildit(tGizmoBuildit + n.ToText("int 2") );
+			// cleanup stuff...
+			while ( nMaxStage >= n )
+			{
+				gBuildit = (tGizmoBuildit + n.ToText("int 2"));			
+				gBuildit.SetVisible(false);
+				gBuildit.SetActive(false);
+				n = n + 1;
+			};
+		};
+		
+		if ( hMissionStart )
+		{
+			hMissionStart.SetActive(false);
+		};
+		// All tidy, let the game know...
+		MissionCleanupEnd();
+	};
+};
+
+
+
+/////////////////////////////////////////////////////////////////////////////////
+//// Mission Loop
+/////////////////////////////////////////////////////////////////////////////////
+
+
+state Begin()
+{
+	Actions
+	{
+		// Remove the icon above the vehicle
+		hMissionStart.Trigger();
+		
+		// Start the timer and setup the other hud elements
+		UI_StartMission();
+		missionTimer = 0;	
+		UI_SetHUDTimer( nMaxTime, 1, missionTimer );
+		UI_ShowHUDTimer(true);	
+		UI_SetHeroBarMax(nHeroMax);	
+		
+		// Stream in patients for spawning immediately
+		StreamedCharacterPreLoad( tType );
+		
+		// Set tile for the first stage
+		SetTile();
+		// OBJ_Abort.ScriptGoto("Begin");
+		goto SetStage();
+	};
+};
+
+
+State SetStage( )
+{
+	Locator lSatNav(tSatNavLocator + nStage.ToText("int 2"));
+	Gizmo gBuildit(tGizmoBuildit + nStage.ToText("int 2") );
+	
+	Conditions
+	{
+		if ( cMissionPlayer.GetVehicle( ) != cAmbulance  )
+		{
+			UI_RemoveMissionHelpText(); 
+			UI_RadioCall(false);
+			goto ReturnToVehicle(); 	
+		};
+	};	
+	Actions
+	{
+		tReturnState = "SetStage";
+		// Ensure the player can drive to the next stage
+		cAmbulance.SetParked(false);
+		
+		
+		gBuildit.SetVisible(true);
+		gBuildit.SetActive(true);
+			
+		
+		ActivateHotspot( nStage );		
+		SetSatNavDestination( lSatNav );
+		
+		Text t("MISSION_PARAMEDIC_PATIENT_");
+		t = t + nStage.ToText("int 2");
+		UI_RadioCall( true );		
+		Wait(0.25);
+		UI_SetMissionHelpText( t, 5 );
+		tReturnState = "SpawnBuildit";
+		Wait( 5.5 );
+		UI_RadioCall( false );
+		goto SpawnBuildit();
+	};
+};
+
+
+
+State SpawnBuildit( )
+{
+	Gizmo gBuildit(tGizmoBuildit + nStage.ToText("int 2") );
+	Bool bSpawnBuildit(true);
+	Bool bPark(true);
+	Bool bReachedPatient(false);
+	
+	Conditions
+	{
+		
+		if ( cMissionPlayer.GetVehicle( ) != cAmbulance  AND  !bReachedPatient )
+		{
+			if ( cMissionPlayer.DistanceToXZ( gBuildit ) > nReturnToPatientDistance ) 
+			{ 	
+				goto ReturnToVehicle(); 
+			}			
+			else {  bReachedPatient = true; };		
+		};
+		
+		if ( bReachedPatient )
+		{
+			if ( cMissionPlayer.DistanceToXZ( gBuildit ) > nReturnToPatientDistance ) { goto ReturnToPatient(); }
+		};
+		
+		
+		// Check to see if the pedestrian buildit has been completed and then go to the next stage to swap him out for an actual AI pedestrian
+		if ( gBuildit.HasFinished() )  
+		{
+			gBuildit.SetVisible(false);	
+			gBuildit.SetActive(false);	
+			goto SpawnPedestrian();			
+		};
+		
+		// If the player runs out of time, go to the out of time stage
+		if ( missionTimer > nMaxTime ) { goto OutOfTime(); };
+		
+		
+		// Check to see if the buildit needs spawning
+		if ( bSpawnBuildit )
+		{
+			// If it does need spawning, check to see if the tile is loaded
+			if ( wlCurrentTile.IsLoaded() )
+			{
+				bSpawnBuildit = false;
+				gBuildit.SetActive(false);
+				gBuildit.SetActive(true);
+			};
+		}
+		else
+		{
+			// if it doesn't need spawning, check that the tile isn't loaded, and then if it isn't, make sure we know it needs building again.
+			if ( !wlCurrentTile.IsLoaded() ) { bSpawnBuildit = true; };
+		};
+				
+	};
+};
+
+
+// Spawn the pedestrian character 
+State SpawnPedestrian( )
+{
+	Gizmo gBuildit(tGizmoBuildit + nStage.ToText("int 2") );
+	Number n(1);
+
+	Actions
+	{
+		//gLocKillMoveTo = "TaxiMissionCustomerEnd01_TEST";
+		n = gBuildit.GetDirection();		
+		cPatient = CreateAICharacter(tType, "Pedestrian", gBuildit, n);	
+		cPatient.Release();
+
+		Playergivestuds(nBuilditAward);
+		Text t("MISSION_GRATITUDE_");
+		n = RandomInt(1, 4);
+		t = t + n.ToText("int 2");
+		UI_SetMissionHelpText( t, 4 );
+		
+		// calls the remove hotspot function - do so before nStage is incremented to ensure the stage which has just been completed is removed and not the next one!
+		RemoveHotspot( nStage );
+		nStage = nStage + 1;
+		
+		tReturnState = "SetStage";
+		
+		// Check to see if you've completed the mission, otherwise carry on to the next state in the loop.
+		if ( nStage > nMaxStage ) 
+		{			
+			goto MissionEnd();
+		}
+		else 
+		{ 			
+			goto ReturnToVehicle(); 
+		};
+	};
+};
+
+////////////////////////////////////////////////////////////////
+// Abandon Mission
+////////////////////////////////////////////////////////////////
+
+State ReturnToPatient( )
+{
+	Number nPatientAbort(8);
+	Gizmo gBuildit(tGizmoBuildit + nStage.ToText("int 2") );
+	Text tAwayFromPatientPrompt("MISSION_PARAMEDIC_RETURN_TO_PAT");
+	Text tAbandonedPatientPrompt("MISSION_PARAMEDIC_ABANDONED_PATIENT");
+	Conditions 
+	{
+		if ( cMissionPlayer.GetVehicle() == cAmbulance  OR  cMissionPlayer.DistanceToXZ( gBuildit ) < nReturnToPatientDistance  )
+		{
+			UI_RemoveMissionMessage();					
+			goto SpawnBuildit();		
+		};
+		
+		if ( cMissionPlayer.DistanceToXZ( cAmbulance ) > nAbortDistance  AND  cMissionPlayer.DistanceToXZ( gBuildit ) > nPatientAbort )
+		{
+			UI_SetMissionMessage( tAbandonedPatientPrompt, 5 );
+			MissionAbort();
+		};
+	};
+	Actions
+	{
+		UI_SetMissionMessage( tAwayFromPatientPrompt );
+	};
+};
+
+
+State ReturnToVehicle( )
+{
+	Text tOutOfVehiclePrompt("MISSION_PARAMEDIC_RETURN_TO_AMB");
+	Text tAbandonedVehiclePrompt("MISSION_PARAMEDIC_ABANDONED");
+	Conditions
+	{
+		if ( cMissionPlayer.GetVehicle() == cAmbulance )
+		{
+			UI_RemoveMissionMessage();
+			
+			if ( tReturnState == "SetStage" )
+			{
+				goto SetStage();
+			}
+			else {goto SpawnBuildit(); };
+		};
+		
+		if ( cMissionPlayer.DistanceToXZ( cAmbulance ) > nAbortDistance )
+		{
+			UI_SetMissionMessage( tAbandonedVehiclePrompt, 5 );
+			MissionAbort();
+		};
+	};
+	Actions
+	{
+		UI_SetMissionMessage( tOutOfVehiclePrompt );
+	};
+};
+
+
+
+// Mission ended due to player running out of time - Give out of time message and reset mission
+State OutOfTime( ) 
+{
+	Conditions
+	{
+	};
+	Actions
+	{
+		UI_EndMission("MISSION_FAIL_TIMEOUT", false);
+		goto HandleFailScreen();
+	};
+};
+
+
+State HandleFailScreen( )
+{
+	Timer time(0);
+	Bool b(false);
+	Conditions
+	{
+		if ( time > 0.1  AND  ( PlayerPressedButton(cMissionPlayer, "A")  OR  PlayerPressedButton("Y") ) AND !b )
+		{
+			UI_ResetMission();
+			goto Reset();
+		}
+		else
+		{
+			if ( (b AND !cMissionPlayer.GetVehicle()) OR  PlayerPressedButton(cMissionPlayer, "A")  OR  PlayerPressedButton("Y") )
+			{
+				UI_ResetMission();
+				goto Reset();
+			};
+		};
+		
+	};
+	Actions
+	{
+		if ( cMissionPlayer.GetVehicle() ) 
+		{
+			b = true;
+		};	
+	};
+};
+
+
+
+
+// Player completed the mission
+State MissionEnd( )
+{
+	Conditions
+	{
+		// if ( UI_IsEndMissionComplete() )
+		//{
+		//	goto Reset();
+		//};		
+	};
+	Actions
+	{
+		cAmbulance.SetParked(true);
+		// UI_EndMission("MISSION_COMPLETE", true);	
+		goto Reset();
+	};
+};
+
+
+// Reset all mission assets
+State Reset( )
+{
+	Number n(1);
+	Text t("");
+	Gizmo gBuildit(tGizmoBuildit + n.ToText("int 2") );
+	Conditions
+	{
+	};
+	Actions
+	{
+		// REPLACE WITH BELOW WHILE LOOP WHEN gizmo.Reset() WORKS 
+			
+		
+		while ( nMaxStage >= n )
+		{
+			gBuildit = (tGizmoBuildit + n.ToText("int 2"));
+			gBuildit.SetVisible(false);
+			gBuildit.SetActive(false);
+			n = n + 1;
+		};  
+		UI_SetStatsStuds();		
+		UI_StopHUDTimer();
+		UI_ShowHUDTimer(false);	
+		SetHotSpot();
+		StreamedCharacterReleaseAll();
+		cAmbulance.SetParked(false);	   
+		cAmbulance.SetScript( tScript );
+		cAmbulance = "";
+		
+		if ( nStage > nMaxStage )
+		{
+			nStage = 1;
+			MissionComplete(); // NEEDS TO CHECK AGAINST MISSION COMPLETE STATUS AND FAIL / END MISSION IF MISSION FAILED / ABANDONED ONCE THAT STATE IS AVAILABLE
+		}
+		else
+		{
+			nStage = 1;
+			MissionAbort(); 
+		};
+	};
+};

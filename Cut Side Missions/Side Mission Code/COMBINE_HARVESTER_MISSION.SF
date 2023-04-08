@@ -1,0 +1,568 @@
+
+WorldLevel wlCity("Lego_City");
+WorldLevel wlFarmLands("WI_Farmlands_0507");
+
+Timer timeMission(0);
+
+HotSpot hMissionStart("BM_Harvest_FL_01_Start", wlCity);
+
+Character cPlayer1("player1");
+Character cPlayer2("player2");
+Character cMissionPlayer;
+Vehicle cHarvester;
+
+Locator lVehicleSpawn("BM_Harvest_FL_01_SpawnHarvester", wlCity);
+Locator lResetPlayer("BM_Harvest_FL_01_ResetPlayer", wlCity);
+Text tVehicleType("CombineHarvester");
+
+Number nCityHeroTarget(42000);	// Total required for Lego city hero 
+Number nMaxTime(200); 			// Maximum time the player has
+Number nTotal(0); 				// Total number of corn blowups triggered
+Number nMaxCorn(0);				// Total number of corn availble (set via AI messages / the complex gizmos themselves
+
+
+Function LevelEnter (WorldLevel level)
+{
+	if (!cPlayer1)
+	{
+		cPlayer1 = "player1";
+	};
+		
+	if (!cPlayer2)
+	{
+		cPlayer2 = "player2";
+	};
+};
+
+////////////////////////////////////////////////////////////////////////////////////
+// Setup
+////////////////////////////////////////////////////////////////////////////////////
+
+State Setup()
+{
+	Conditions
+	{
+		if ( wlCity.IsLoaded() )
+		{
+			goto EnableHotspot();
+		};
+	};	
+	Actions
+	{
+	};
+};
+
+
+State EnableHotspot()
+{
+	Conditions
+	{
+	};	
+	Actions
+	{
+		// setup stuff...
+		// [NOTE: stuff done here must be un-done in Cleanup()]
+		
+		hMissionStart.SetHaloVisible(false);
+		hMissionStart.SetIcon("Bonus");
+		hMissionStart.SetActive(true);
+		hMissionStart.NoCondition();
+		goto WaitForReturnToTile();
+	};
+};
+
+
+
+State WaitForReturnToTile()
+{
+	Conditions
+	{
+		if( wlFarmLands.IsLoaded() ) 
+		{ 
+			if ( cHarvester ) 
+			{ 
+				cHarvester.Destroy();
+				cHarvester = "";
+			};
+			goto WaitForPlayerInVehicle(); 
+		};
+	};
+	Actions
+	{
+	};	
+};
+
+
+// Activate, then await the player to enter the combine harvester.
+State WaitForPlayerInVehicle()
+{
+	
+	Conditions
+	{
+		// Check to see if the player enters the mission's vehicle		
+		if ( cHarvester )
+		{
+			if( cPlayer1.GetVehicle() == cHarvester ) 
+			{ 
+				if (MissionFocus(cPlayer1))
+				{
+					cMissionPlayer = cPlayer1;
+					goto GiveMissionPrompts(); 
+				};
+			};
+			
+			if( cPlayer2.GetVehicle() == cHarvester ) 
+			{ 
+				if (MissionFocus(cPlayer2))
+				{
+					cMissionPlayer = cPlayer2;
+					goto GiveMissionPrompts(); 
+				};
+			};
+		};
+		
+		if(  !wlFarmLands.IsLoaded()  AND  cHarvester ) { goto WaitForReturnToTile(); };
+	};
+	Actions
+	{
+		if ( !cHarvester )
+		{
+			Number nDirection(0);
+			nDirection = lVehicleSpawn.GetDirection();
+			
+			cHarvester = CreateAIVehicle( tVehicleType, "Farm", lVehicleSpawn, nDirection );	
+			wait(0);
+			cHarvester.SetParked(true);		
+		};
+	};
+};
+
+
+// Checks to see if the player starts the mission or not - handles accepting the mission
+State GiveMissionPrompts()
+{
+	// Number n(0);
+	
+	Conditions
+	{
+//		 Gets out of the vehicle before pressing LB to initiate mission...
+		if( cMissionPlayer.GetVehicle() != cHarvester ) 
+		{ 
+			cHarvester.SetParked(false);
+			UI_HideMissionPrompt();
+			MissionUnfocus();
+			goto WaitForPlayerInVehicle(); 
+		};
+
+		if( PlayerPressedButton(cMissionPlayer, "A") ) 
+		{ 
+			MissionActivate();
+		};
+	};
+	Actions
+	{
+		UI_ShowMissionPrompt("Hud_Mission_Bonus_Combine", "MISSION_INSTRUCTIONS_COMBINE_HARVEST", "MISSION_PROMPT", "MISSION_TITLE_COMBINE_HARVEST");		
+	};
+};
+
+
+
+
+////////////////////////////////////////////////////////////////////////////
+// CLEANUP
+////////////////////////////////////////////////////////////////////////////
+
+
+State Cleanup()
+{
+	Number n(0);
+	Actions
+	{		
+		// cleanup stuff...
+		
+		if ( MissionWasCompleted() )
+		{
+			goto AwaitEndScreen();
+		};
+		
+		if ( MissionWasAborted() )
+		{		
+			FadeScreen(true);
+			Wait(1);
+			Message mHideCorn("msg_Level.wifl_cornhide", wlFarmLands);
+			Message mShowCorn("msg_Level.wifl_cornshow", wlFarmLands);
+			Message_Set(mShowCorn, 0);
+			Message_Set(mHideCorn, 1);
+			
+			if (cMissionPlayer.GetVehicle())
+			{
+				cMissionPlayer.ClearVehicle();	
+			};
+		};
+		
+		if ( hMissionStart )
+		{
+			hMissionStart.SetActive(false);
+		};
+		
+		if ( cHarvester )
+		{
+			cHarvester.Destroy();
+			cHarvester = "";
+		};		
+
+		StreamedCharacterReleaseAll();
+		
+		if ( MissionWasAborted() )
+		{
+			Wait(1);
+			FadeScreen(false);
+			n = lResetPlayer.GetDirection();
+			cMissionPlayer.Teleport( lResetPlayer, n );
+		};
+		
+		
+		// All tidy, let the game know...		
+		MissionCleanupEnd();
+	};
+};
+
+State AwaitEndScreen( )
+{
+	Conditions
+	{	
+		if ( UI_IsEndMissionComplete())
+		{	
+			goto HandleCompleted();
+		};
+	};
+	Actions
+	{
+		cHarvester.SetParked(true);
+	};
+};
+
+
+State HandleCompleted( )
+{
+	Number n(0);
+	Actions
+	{
+		Wait(0.5);
+		FadeScreen(true);
+		Wait(1);
+		Message mHideCorn("msg_Level.wifl_cornhide", wlFarmLands);
+		Message mShowCorn("msg_Level.wifl_cornshow", wlFarmLands);
+		Message_Set(mShowCorn, 0);
+		Message_Set(mHideCorn, 1);
+		
+		if ( !cMissionPlayer )
+		{
+			cMissionPlayer = MissionGetPlayer();
+		};
+		if ( cMissionPlayer.GetVehicle() )
+		{
+			cMissionPlayer.ClearVehicle();
+		};
+		
+		if ( cHarvester )
+		{
+			cHarvester.Destroy();
+			cHarvester = "";
+		};	
+		StreamedCharacterReleaseAll();
+		Wait(0.5);
+		n = lResetPlayer.GetDirection();
+		cMissionPlayer.Teleport( lResetPlayer, n );
+		FadeScreen(false);
+		Wait();
+		MissionCleanupEnd();
+	};
+};
+
+////////////////////////////////////////////////////////////////////////////
+// MISSION
+////////////////////////////////////////////////////////////////////////////
+
+State Begin()
+{
+	Message mTotal("msg_Level.wifl_corntotal", wlFarmLands);
+	Actions
+	{
+		UI_StartMission();
+		Wait (0.5);
+		FadeScreen(true);
+		Wait(1);
+		hMissionStart.Trigger();
+		Message mHideCorn("msg_Level.wifl_cornhide", wlFarmLands);
+		Message mShowCorn("msg_Level.wifl_cornshow", wlFarmLands);
+		Message_Set(mHideCorn, 0);
+		Message_Set(mShowCorn, 1);
+		SnapCameraToDir(1, "Rear");
+		Wait();
+		
+		FadeScreen(false);
+		Wait(0.25);
+		
+		
+		
+		// Count down on screen
+		Wait(1);
+		UI_SetMissionMessage("MISSION_GENERIC_COUNTDOWN_3", 2 );
+		Wait(2);
+		UI_SetMissionMessage("MISSION_GENERIC_COUNTDOWN_2", 2 );
+		Wait(2);
+		UI_SetMissionMessage("MISSION_GENERIC_COUNTDOWN_1", 2 );
+		Wait(2);
+
+		UI_RemoveMissionMessage(); 
+
+		
+		cHarvester.SetParked(false);
+		timeMission = 0;
+		UI_SetMissionMessage ( "MISSION_COMBINE_HARVESTER_START", 3 );
+		UI_SetHUDTimer( nMaxTime, 1, timeMission );
+		UI_ShowHUDTimer(true); 
+		
+		UI_SetHeroBarMax( nCityHeroTarget );
+		
+		// Each CompelxGizmo (due to its builder scene flow) increments the message mTotal references by 1 on startup, giving the total number of complex gizmos
+		nMaxCorn = mTotal;
+		UI_SetMissionDamageBarText("MISSION_COMBINE_HARVESTER_BAR_NAME");
+		UI_SetMissionDamageBar ( nMaxCorn, nMaxCorn );
+		UI_ShowMissionDamageBar(true);
+		
+		
+		goto CheckCorn();	
+	};
+};
+
+// this state watches how much corn has been harvested and checks the player is still in the vehicle
+State CheckCorn()
+{
+	// Check to see if the message is greater than 0 - each complex gizmo (due to its builder scene flow) increments the message by 1 when it blows up
+	Message mBlowup("msg_Level.wifl_cornblowup", wlFarmLands);
+	Conditions
+	{	
+		if ( !wlFarmLands.IsLoaded() ) { goto AbandonMission(); };
+		
+		if( mBlowup > 0 ) { goto CornProcess(); };
+		
+		// if all the corn has been destroyed / harvested, go to the end of the mission (yay)
+		if( nTotal >= nMaxCorn ) { goto Reset(); };
+		
+		// if the player runs away
+		if( cMissionPlayer.GetVehicle() != cHarvester) { goto AbandonMission(); };
+		
+		if( timeMission >= nMaxTime) { goto OutOfTime(); };
+	};
+	Actions
+	{
+	};
+};
+
+// Give coins and increment total based on how many blowups have been destroyed / are remaining (need to include time as a bonus still)
+State CornProcess()
+{
+	Message mBlowup("msg_Level.wifl_cornblowup", wlFarmLands);
+	Number nTimeMultiplier(1);
+	Number n(0);
+	Conditions
+	{	
+		if ( !wlFarmLands.IsLoaded() ) { goto AbandonMission(); };
+		if( timeMission >= nMaxTime) { goto OutOfTime(); };
+	};
+	Actions
+	{
+		while ( mBlowup > 0 )	  // Do the below until the AI message is 0 and therefor all corn complex gizmos blowing up have been registered by the script	
+		{
+			nTotal = nTotal + 1;  // Increment the total number of corn destroyed
+			Message_Set( mBlowup, (mBlowup - 1) ); // decrement the AI message 
+		
+			// Work out time multiplier 
+			
+				// Normalise the value
+			nTimeMultiplier = (( nMaxTime - timeMission ) / nMaxTime);		
+				// Add 1, so that applying the multiplier gives a percentage of the value, plus the value itself
+			nTimeMultiplier = nTimeMultiplier + 1;		
+				// Safety check that nMultiplier is above 1
+			if ( nTimeMultiplier < 1 ) 	{ nTimeMultiplier = 1; };
+			
+			
+			// Check to see how many corn remain and reward more studs if most of the corn has been harvested			
+			if( nTotal < (nMaxCorn / 2) ) 				{ n = (100 * nTimeMultiplier); }
+			elseif( nTotal < ( nMaxCorn * (3/4) ) ) 	{ n = (200 * nTimeMultiplier); }
+			else 										{ n = (300 * nTimeMultiplier); };	
+			
+			//Award the player studs
+			PlayerGiveStuds( n );
+		};	
+			
+		// Update the bar displaying the mission's progress
+		UI_SetMissionDamageBar ( (nMaxCorn - nTotal), nMaxCorn );
+		goto CheckCorn();		
+	};
+};
+
+
+
+State OutOfTime( ) 
+{
+	Conditions
+	{
+		
+	};
+	Actions
+	{
+		UI_EndMission("MISSION_FAIL_TIMEOUT", false);
+		goto HandleFailScreen();
+	};
+};
+
+
+State HandleFailScreen( )
+{
+	Timer time(0);
+	Bool b(false);
+	Conditions
+	{
+		if ( time > 0.1  AND  PlayerPressedButton(cMissionPlayer, "A") )
+		{
+			UI_ResetMission();
+			goto Restart();
+		}
+		elseif ( PlayerPressedButton(cMissionPlayer, "B") AND !b )
+		{
+			UI_ResetMission();
+			goto Reset();
+		}
+		else
+		{
+			if ( (b AND !cMissionPlayer.GetVehicle()) OR  PlayerPressedButton(cMissionPlayer, "A")  OR  PlayerPressedButton(cMissionPlayer, "Y") )
+			{
+				UI_ResetMission();
+				goto Reset();
+			};
+		};
+		
+	};
+	Actions
+	{
+		if ( cMissionPlayer.GetVehicle() ) 
+		{
+			b = true;
+		};	
+		
+		if ( cHarvester )
+		{
+			cHarvester.SetParked(true);
+		};
+	};
+};
+
+
+
+State AbandonMission( )
+{
+	Conditions
+	{
+	};
+	Actions
+	{
+		Wait(1.5);
+		UI_EndMission("MISSION_GENERIC_ABANDONED", false);
+		goto HandleFailScreen();
+	};
+};
+
+
+State Restart( )
+{
+	Message mTotal("msg_Level.wifl_corntotal", wlFarmLands);
+	Number nDirection(0);
+	Actions
+	{
+		//FadeScreen(true);
+		Wait(1);
+
+		Message mHideCorn("msg_Level.wifl_cornhide", wlFarmLands);
+		Message mShowCorn("msg_Level.wifl_cornshow", wlFarmLands);
+					
+		if ( wlFarmLands.IsLoaded() )
+		{
+			Message_Set(mShowCorn, 0);
+			Message_Set(mHideCorn, 1);
+		}
+
+		UI_StopHUDTimer();
+		UI_ShowHUDTimer(false);	
+		UI_ShowMissionDamageBar(false);
+		nTotal = 0;
+		nDirection = lVehicleSpawn.GetDirection();			
+		cHarvester.Teleport( lVehicleSpawn, nDirection );		
+		Wait(2);
+		Message_Set(mHideCorn, 0);
+		Message_Set(mShowCorn, 1);
+
+		
+		
+		
+		Wait();
+		SnapCameraToDir(1, "Rear");
+		FadeScreen(false);
+		Wait(0.25);
+		
+		// Count down on screen
+		Wait(1);
+		UI_SetMissionMessage("MISSION_GENERIC_COUNTDOWN_3", 2 );
+		Wait(2);
+		UI_SetMissionMessage("MISSION_GENERIC_COUNTDOWN_2", 2 );
+		Wait(2);
+		UI_SetMissionMessage("MISSION_GENERIC_COUNTDOWN_1", 2 );
+		Wait(2);
+
+		UI_RemoveMissionMessage(); 
+
+		
+		cHarvester.SetParked(false);
+		timeMission = 0;
+		UI_SetMissionMessage ( "MISSION_COMBINE_HARVESTER_START", 3 );
+		UI_SetHUDTimer( nMaxTime, 1, timeMission );
+		UI_ShowHUDTimer(true); 
+		
+		UI_SetHeroBarMax( nCityHeroTarget );
+		
+		// Each CompelxGizmo (due to its builder scene flow) increments the message mTotal references by 1 on startup, giving the total number of complex gizmos
+		nMaxCorn = mTotal;
+		UI_SetMissionDamageBarText("MISSION_COMBINE_HARVESTER_BAR_NAME");
+		UI_SetMissionDamageBar ( nMaxCorn, nMaxCorn );
+		UI_ShowMissionDamageBar(true);
+		
+		
+		goto CheckCorn();	
+	};
+};
+
+
+
+State Reset( )
+{
+	Conditions
+	{
+	};
+	Actions
+	{
+		UI_StopHUDTimer();
+		UI_ShowHUDTimer(false);	
+		UI_ShowMissionDamageBar(false);
+
+		if ( nTotal >= nMaxCorn )
+		{
+			MissionComplete();
+		}
+		else
+		{
+			MissionAbort(); 
+		};
+	};
+};

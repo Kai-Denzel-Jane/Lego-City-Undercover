@@ -1,0 +1,58 @@
+
+//Gizmo gBuildit("iASTRO_SATELLITE_BLD_CMPLX2");
+
+Gizmo gBeam("iASTRO_BEAMDOWN_CMPLX3");
+
+Gizmo gTeleported("iBEAMED_GRAPPLE_CORK");		// Gizmo to be faded in / appear as if it's teleported in by the teleport beam
+
+State Base()
+{
+	Conditions
+	{
+		if ( gBuildit.GetOutput(1) )
+		{
+			goto AwaitBeamDown();
+		};
+	};
+	Actions
+	{
+		gBeam.SetActive(false);
+		gBeam.SetVisible(false);
+		gTeleported.SetActive(false);
+		gTeleported.SetVisible(false);
+	};
+};
+
+State AwaitBeamDown()
+{
+	Conditions
+	{
+		if ( gBeam.GetOutput(1) )
+		{
+			goto SpawnAndFade();
+		};
+	};
+	Actions
+	{
+		gBeam.SetActive(true);
+		gBeam.SetVisible(true);
+	};
+};
+
+State SpawnAndFade()
+{
+	Character cBeamDown("");
+	Number n(0);
+	Actions
+	{
+		Wait(7);
+		gTeleported.SetActive(true);
+		gTeleported.SetVisible(true);	
+		// FADE IN HERE
+		gTeleported.FadeOut(0);			
+		gTeleported.FadeIn(1.5);		
+	};
+};
+
+
+Base();

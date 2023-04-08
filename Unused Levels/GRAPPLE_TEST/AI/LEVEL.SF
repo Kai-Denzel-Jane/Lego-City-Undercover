@@ -1,0 +1,75 @@
+Gizmo gShield_01("iCOP_HOTSPOT_OB");
+Gizmo gShield_02("iCOP_HOTSPOT_OB1");
+Gizmo gShield_03("iCOP_HOTSPOT_OB2");
+
+Character cPlayer1("player1");
+
+Number nShowDistance(0.3);
+
+State Base()
+{
+	Bool bShield_01_Visible(false);
+	Bool bShield_02_Visible(false);
+	Bool bShield_03_Visible(false);
+	Conditions
+	{
+		if ( !bShield_01_Visible )
+		{
+			if ( cPlayer1.DistanceTo(gShield_01) <= nShowDistance )
+			{
+				gShield_01.SetVisible(true);
+				bShield_01_Visible = true;
+			};
+		}
+		else
+		{
+			if ( cPlayer1.DistanceTo(gShield_01) > nShowDistance )
+			{
+				gShield_01.SetVisible(false);
+				bShield_01_Visible = false;
+			};
+		};
+		
+		if ( !bShield_02_Visible )
+		{
+			if ( cPlayer1.DistanceTo(gShield_02) <= nShowDistance )
+			{
+				gShield_02.SetVisible(true);
+				bShield_02_Visible = true;
+			};
+		}
+		else
+		{
+			if ( cPlayer1.DistanceTo(gShield_02) > nShowDistance )
+			{
+				gShield_02.SetVisible(false);
+				bShield_02_Visible = false;
+			};
+		};
+		
+		if ( !bShield_03_Visible )
+		{
+			if ( cPlayer1.DistanceTo(gShield_03) <= nShowDistance )
+			{
+				gShield_03.SetVisible(true);
+				bShield_03_Visible = true;
+			};
+		}
+		else
+		{
+			if ( cPlayer1.DistanceTo(gShield_03) > nShowDistance )
+			{
+				gShield_03.SetVisible(false);
+				bShield_03_Visible = false;
+			};
+		};		
+	};
+	Actions
+	{
+		gShield_01.SetVisible(false);
+		gShield_02.SetVisible(false);
+		gShield_03.SetVisible(false);
+	};
+};
+
+Base();

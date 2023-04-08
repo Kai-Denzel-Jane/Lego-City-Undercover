@@ -1,0 +1,27 @@
+Gizmo gInvestigate("iDETECTIVE_TRUE_CMPLX");  //  ENSURE THIS STRING IS THE SAME AS YOUR REFERENCE'S NAME - RENAME THIS TO MATCH THE REFERENCE 
+
+
+State Setup( )
+{
+	
+	Conditions
+	{
+		
+		if ( gInvestigate.GetOutput(0) )
+		{
+			PrintToScreen("OUTPUT 0 GIVEN!");
+		};
+
+	};
+	Actions
+	{
+
+		
+	};
+};
+
+
+
+
+
+Setup();

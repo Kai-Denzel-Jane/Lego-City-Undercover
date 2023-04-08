@@ -1,0 +1,135 @@
+Character cPlayer1("player1");
+Character cPlayer2("player2");
+
+Bool bPlayer1(false);
+Bool bPlayer2(false);
+
+Area aAllowA("Area_Detective_Draws");
+
+
+Gizmo gDetectiveSpot("iDETECTIVE_CMPLX");
+//Gizmo gDraws("iDETECTIVE_DRAWER_CMPLX");
+Gizmo gDetectiveSpotTrapDoor("iDETECTIVE_TD_CMPLX");
+
+
+Function TurnOffFalseSpots( Number nLastNumber, bool bOn, Text tSpot )
+{
+	Number n(0);
+	Gizmo gSpot("");
+	Text t("");
+	
+	While ( n <= nLastNumber )
+	{
+		t = tSpot;
+		
+		if ( n > 0  AND  n < 10)
+		{
+			t = t + n.ToText("int 1");
+		}		
+		elseif ( n >= 10)
+		{
+			t = t + n.ToText("int 2");
+		}
+		elseif ( n >= 100)
+		{
+			t = t + n.ToText("int 3");
+		};
+		
+		gSpot = t;
+		gSpot.SetActive( bOn );
+		gSpot.SetVisible( bOn );
+		
+		n = n + 1;
+	};
+};
+
+
+State Base( )
+{
+	Conditions
+	{
+		if ( gDetectiveSpotTrapDoor.GetOutput(0) )
+		{
+			goto PermissionSet();
+		};
+	};
+	Actions
+	{
+		gDetectiveSpot.SetActive(false);
+		//gDraws.SetActive(false);
+		TurnOffFalseSpots(0, false, "iDETECTIVE_CMPLX_FALSE" );
+		
+	};
+};
+
+
+State PermissionSet( ) 
+{
+	Conditions
+	{
+		if ( !bPlayer1 )
+		{
+			if ( cPlayer1.InArea(aAllowA) )
+			{
+				bPlayer1 = true;
+				AllowDetectiveMode(cPlayer1, bPlayer1);
+			};
+		}
+		else
+		{
+			if ( !cPlayer1.InArea(aAllowA) )
+			{
+				bPlayer1 = false;
+				AllowDetectiveMode(cPlayer1, bPlayer1);
+			};
+		};
+		
+		if ( !bPlayer2 )
+		{
+			if ( cPlayer2.InArea(aAllowA) )
+			{
+				bPlayer2 = true;
+				AllowDetectiveMode(cPlayer2, bPlayer2);
+			};
+		}
+		else
+		{
+			if ( !cPlayer2.InArea(aAllowA) )
+			{
+				bPlayer2 = false;
+				AllowDetectiveMode(cPlayer2, bPlayer2);
+			};
+		};
+		
+		if ( gDetectiveSpot )
+		{
+			if ( gDetectiveSpot.GetOutput(0) )
+			{
+				goto Ended();
+			};
+		};		
+	};
+	Actions
+	{
+		gDetectiveSpot.SetActive(true);
+		TurnOffFalseSpots(0, true, "iDETECTIVE_CMPLX_FALSE" );
+		TurnOffFalseSpots(9, false, "iDETECTIVE_TD_CMPLX_FOOTPRINT" );
+		Wait(3);
+		AllowDetectiveMode(cPlayer1, true);
+	};
+};
+
+State Ended( )
+{
+	Actions
+	{
+
+		AllowDetectiveMode(cPlayer1, false);
+		AllowDetectiveMode(cPlayer2, false);
+		
+		TurnOffFalseSpots(0, false, "iDETECTIVE_CMPLX_FALSE" );
+		
+	};
+};
+
+Base();

@@ -1,0 +1,3 @@
+Agent	; AI combat script
+level	; Hint text
+level1	; Scene transition

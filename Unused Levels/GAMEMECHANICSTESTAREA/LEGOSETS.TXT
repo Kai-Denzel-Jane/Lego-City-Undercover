@@ -1,0 +1,25 @@
+Level "Builder_Street_Urban"
+Level "Builder_Street_Modern"
+Level "BuilderRamps"
+Level "BuilderPropDynamic"
+Level "BuilderPropDynamic_02"
+Level "Builder_Bank"
+Level "Builder_Sewer"
+Level "Builder_EnergyGun"
+Level "Builder_Icecream_Parlour"
+
+Level "VFX_Electrics" update_tex_anims
+
+Level "Builder_Heavy_Duty_Crate"
+
+Level "Builder_SF_Residential"
+
+Level "Builder_Disguise_Booth"
+
+Level "Builder_Astronaut"        // 2.071 MB
+Level "Builder_Cop"              // 0.509 MB 
+Level "Builder_Farmer"           // 1.9   MB
+Level "Builder_Fireman"          // 3.149 MB
+Level "Builder_Miner"            // 2.826 MB
+Level "Builder_Robber"           // 2.114 MB
+Level "Builder_Worker"           // 1.970 MB

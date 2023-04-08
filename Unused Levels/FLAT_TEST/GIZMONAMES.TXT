@@ -1,0 +1,5 @@
+GizObstacle		iSB_Ramp_02
+ComplexGizmo		iCarshmat_SB_CMPLX
+GizItem		#ex_3_PDACommunicator_item
+GizItem		#ex_4_ScanCommunicator_item
+GizItem		#ex_5_PDAShop_item

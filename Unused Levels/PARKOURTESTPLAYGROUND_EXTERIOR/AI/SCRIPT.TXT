@@ -1,0 +1,4 @@
+;level		; 	hint text
+level1		;	Test Parkour character
+level2		;	Reset Chicken Glide
+level3		;	Reset Jet Pack Glide

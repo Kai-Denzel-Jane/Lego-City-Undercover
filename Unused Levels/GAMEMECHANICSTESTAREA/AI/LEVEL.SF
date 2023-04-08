@@ -1,0 +1,141 @@
+Gizmo gReward("Reward");
+Gizmo gStuds_01("StudPickups_01");
+Gizmo gStuds_02("StudPickups_02");
+Gizmo gStuds_03("StudPickups_03");
+Gizmo gCarGame("RC_Car_TECHNO");
+Number nMaxTime(15);   // TIME REMAINING FOR RC CAR
+
+Character cPlayer1("player1");
+
+
+State Setup( )
+{
+	Bool b(true);
+	Conditions
+	{
+		if ( gCarGame.GetOutput( 1 )  AND  cPlayer1.GetClass() == "TowTruckDriver" )
+		{
+			goto StartGame();
+		};		
+	};
+	Actions
+	{
+		
+		gStuds_01.SetVisible(false);
+		gStuds_02.SetVisible(false);
+		gStuds_03.SetVisible(false);
+		gStuds_01.SetActive(false);
+		gReward.SetVisible(false);
+		gReward.SetActive(false);	
+		SockSetEnabled("01", false);
+	};
+};
+
+
+State StartGame( )
+{
+	Conditions
+	{
+	};
+	Actions
+	{
+		FadeScreen(true);
+		Wait(1);
+		SockSetEnabled("01", true);
+		gStuds_01.Reset();
+		gStuds_02.Reset();
+		gStuds_03.Reset();			
+		Wait(0.1);
+		FadeScreen(false);			
+		goto CollectStuds();
+	};
+};
+
+
+State CollectStuds( ) 
+{
+	Timer t(0);
+	Conditions
+	{
+		
+		if ( gStuds_01.GetOutput( 0 )  AND  gStuds_01.GetOutput( 1 )  AND  gStuds_01.GetOutput( 2 )  AND  gStuds_01.GetOutput( 3 )  AND  gStuds_01.GetOutput( 4 )  AND  gStuds_01.GetOutput( 5 )  AND
+			 gStuds_01.GetOutput( 6 )  AND  gStuds_01.GetOutput( 7 )  AND  
+			 gStuds_02.GetOutput( 0 )  AND  gStuds_02.GetOutput( 1 )  AND  gStuds_02.GetOutput( 2 )  AND  gStuds_02.GetOutput( 3 )  AND  gStuds_02.GetOutput( 4 )  AND  gStuds_02.GetOutput( 5 )  AND
+			 gStuds_02.GetOutput( 6 )  AND  gStuds_02.GetOutput( 7 )   )
+		{
+			UI_StopHUDTimer();
+			UI_ShowHUDTimer(false);
+			UI_EndMission("MISSION_COMPLETE", true);
+			gReward.SetActive(true);
+			gReward.SetVisible(true);
+			gReward.Reset();
+			goto EndState();
+		};
+		
+		if  ( t > nMaxTime ) 
+		{
+			UI_StopHUDTimer();
+			UI_ShowHUDTimer(false);
+			UI_EndMission("MISSION_COMPLETE", true);
+			gStuds_01.SetVisible(false);
+			gStuds_02.SetVisible(false);
+			gStuds_03.SetVisible(false);
+			gStuds_01.SetActive(false);
+			gReward.SetVisible(false);
+			gReward.SetActive(false);	
+			goto AwaitSetup();
+		};	
+	};
+	Actions
+	{
+		UI_StartMission();
+		UI_SetHUDTimer( nMaxTime, 1, t );
+		UI_ShowHUDTimer(true);
+	};
+};
+
+
+State AwaitSetup( )
+{
+	Conditions
+	{
+		if ( gCarGame.GetOutput( 1 ) )
+		{
+			gReward.Reset();
+			goto StartGame();
+		};
+	};
+	Actions
+	{
+		Wait(2);
+		FadeScreen(true);
+		Wait(1);
+		SockSetEnabled("01", false);
+		gCarGame.Reset();		
+		Wait(0.3);
+		SnapCameraToDir(0, "Front");
+		FadeScreen(false);
+	};
+};
+
+
+State EndState( )
+{
+	Conditions
+	{
+
+	};
+	Actions
+	{
+		Wait(2);
+		FadeScreen(true);
+		Wait(1);
+		SockSetEnabled("01", false);
+		gCarGame.Reset();
+		Wait(0.3);
+		SnapCameraToDir(0, "Front");
+		FadeScreen(false);
+	};
+};
+
+Setup();

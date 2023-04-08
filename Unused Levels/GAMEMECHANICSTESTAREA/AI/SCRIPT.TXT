@@ -1,0 +1,31 @@
+;level
+;level2
+level3		;	Satalite beam in character
+;level4
+;level5
+;level6
+level7
+;level8		;	Detective spot mechanic control
+;level9		;	Teleport script
+level10		;	Cat patrol script
+;level11		;	Stud Trail
+level12		;	Satalite beam in gizmo GizItem script
+;level13		;	Satalite beam in gizmo GizSpellit script
+;
+;
+; Character Scripts
+;
+;
+;SecretRobber_a
+;SecretRobber_b
+; TM 190711 These scripts contain too many legacy script actions,
+; so I've disabled them for now.
+; They are so old, I don't think they are used or working properly anyway.
+;alien
+;alien_secret
+;
+;
+;Test Script
+;
+;level30
+;level31 //teleport

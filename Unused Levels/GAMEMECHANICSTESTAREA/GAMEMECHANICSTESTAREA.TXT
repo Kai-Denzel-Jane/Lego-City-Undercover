@@ -1,0 +1,139 @@
+special_draw_distance 25.0
+
+character "Cop" player
+character "Fireman" player
+character "farmer" resident
+character "Miner" resident
+character "Astronaut" resident
+character "construction_legocityconstructionworker" resident
+character "robber" resident
+character "KarateChamp" resident
+character "Civilian_ChaseMcCain" resident
+character "alien" resident
+character "NPC_MissionController02" resident
+
+/ VEHICLES ************************************
+
+//character "Aircraft_Jetpack" resident
+//character "Aircraft_UFO" resident
+
+//character "City_WheelChair" resident
+
+
+character "Police_SquadCar" resident
+character "Police_SquadCarC" resident
+character "Police_Trooper" resident
+
+
+character "RC_Cars_Spook" resident
+
+character "Novelty_Buffer2" resident
+
+//character "SaloonCars_Forseti" resident
+//character "SportsCars_Scout" resident
+
+character "Cat" resident
+character "Civic_HazardTruck" resident
+
+
+
+
+// Messages!
+
+AIMessage "detected_01" output0 0 output1 1
+AIMessage "Conv_01" output0 0 output1 1
+
+
+AIMessage "detect_prog" output0 0 output1 1 output2 2 output3 3 output4 4
+
+//-----------------------------------------------
+//-----------------------------------------------
+
+settings_start=1
+	farclip=200
+	nearclip=0.1
+
+	backr_top=0
+	backg_top=0
+	backb_top=0
+	backr_bottom=0
+	backg_bottom=0
+	backb_bottom=0
+
+settings_end
+
+//-----------------------------------------------
+//-----------------------------------------------
+
+////////////////////socks///////////////////////
+
+
+split_camdist_effectratio 0.75
+sock_pullback_useoffset on
+sock_pullback_clampdist 2ss
+sock_SplitVehicleExtraPullback 3.0
+
+//////////
+
+
+// LEVEL DEFAULT SPLINE
+
+
+sock_start 00
+	
+	cam_blend_time 1.5
+	//cam_x_offset 2
+	cam_y_offset 1.3
+	//cam_z_offset 2
+	//offset_blend_x_ratio 1.0
+	cam_dist_to_target 2
+	ignore_socks 01 02 03 04 05 06
+	
+sock_end
+
+
+sock_start 01
+	
+	cam_blend_time 0.1
+sock_end	
+	
+sock_start 03
+	
+	
+	cam_blend_time 1
+	
+sock_end
+
+
+sock_start 04
+	
+	cam_blend_time 1.5
+	ignore_socks 01 02 03 05 06 07
+	
+sock_end
+
+
+sock_start 05
+	
+	cam_blend_time 1
+	ignore_socks 01 02 03 04
+	
+sock_end
+
+
+sock_start 06
+	
+	cam_blend_time 1
+	
+sock_end
+
+
+sock_start 07
+
+//	cam_blend_time 1
+	cam_z_offset 2
+	cam_x_offset 2
+	ignore_socks 01
+//	cam_dist_to_target 1
+
+sock_end

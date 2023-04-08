@@ -1,0 +1,60 @@
+
+Gizmo gBuildit("iASTRO_SATELLITE_BLD_CMPLX");
+
+Gizmo gBeam("iASTRO_BEAMDOWN_CMPLX");
+
+State Base()
+{
+	Conditions
+	{
+		if ( gBuildit.GetOutput(1) )
+		{
+			goto AwaitBeamDown();
+		};
+	};
+	Actions
+	{
+		gBeam.SetActive(false);
+		gBeam.SetVisible(false);
+	};
+};
+
+State AwaitBeamDown()
+{
+	Conditions
+	{
+		if ( gBeam.GetOutput(1) )
+		{
+			goto SpawnAndFade();
+		};
+	};
+	Actions
+	{
+		gBeam.SetActive(true);
+		gBeam.SetVisible(true);
+	};
+};
+
+State SpawnAndFade()
+{
+	Character cBeamDown("");
+	Number n(0);
+	Conditions
+	{
+		if ( cBeamDown )
+		{
+			cBeamDown.FadeIn(1);
+			cBeamDown = "";
+		};
+	};
+	Actions
+	{
+		Wait(7);
+		n = gBeam.GetDirection();
+		cBeamDown = CreateAICharacter("Robber", "Criminal", gBeam, n);
+		cBeamDown.FadeOut(0);				
+	};
+};
+
+
+Base();

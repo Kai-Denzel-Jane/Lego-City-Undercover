@@ -1,0 +1,14 @@
+
+State Base( )
+{
+	Conditions
+	{
+	};
+	Actions
+	{	
+		Wait(3);
+		UI_SetMissionHelpText("Mission37_Hint01", 5); // Tells the player they have to change the course of the Rocket.	
+	};
+};
+
+Base();

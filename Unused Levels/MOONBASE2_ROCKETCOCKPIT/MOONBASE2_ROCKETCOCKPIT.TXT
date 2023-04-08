@@ -1,0 +1,124 @@
+// LEVEL SETTINGS //
+
+//special_draw_distance 25.0                //distance to draw all specials
+legostud_custom_clip_distance 125.0f         //distance to stop drawing studs
+legostud_custom_shadow_clip_distance 0.0f  //distance at which the studs stop being included in the shadow pass
+
+sprint_level
+
+//------------------------------------------------
+
+// CHARACTERS //
+
+character "Cop" player
+character "Fireman" player
+
+character "farmer" resident
+character "miner" resident
+character "Astronaut" resident
+character "construction_legocityconstructionworker" resident
+character "robber" resident
+character "Civilian_ChaseMcCain" resident
+character "Astronaut_EvilAstronaut" resident
+character "Cat" resident
+
+Animset "lvl_moonbase"
+
+//-----------------------------------------------
+
+// Vehicles //
+
+character "Space_LERV" resident
+
+//-----------------------------------------------
+
+AiMessage "Cutscene" Output0 0 output1 1
+
+//-----------------------------------------------
+
+settings_start=1
+	farclip=200
+	nearclip=0.1
+\\CLIP PLANES SET
+	backr_top=47
+	backg_top=77
+	backb_top=133
+	backr_bottom=47
+	backg_bottom=77
+	backb_bottom=133
+
+settings_end
+
+//-----------------------------------------------
+//-----------------------------------------------
+
+////////////////////socks///////////////////////
+
+
+sock_start 01
+	cam_blend_time 1.0
+	campos_seek 5.0
+	cam_x_offset 0.01
+	cam_y_offset 0.8
+	cam_z_offset 0.0
+	offset_blend_x_ratio 0.95
+	offset_blend_y_ratio 0.9
+	offset_blend_z_ratio 0.0
+	cam_dist_to_target 2.5
+
+	veh_cam_blend_time 1.0
+	veh_cam_dist_to_target 2.5
+	veh_cam_pos_seek 5.0
+sock_end
+
+sock_start 02
+	ignore_socks 01
+	cam_blend_time 1.0
+	campos_seek 5.0
+	//cam_x_offset 0.0
+	cam_y_offset 1.0
+	cam_z_offset 0.0
+	offset_blend_x_ratio 0.0
+	offset_blend_y_ratio 0.9
+	offset_blend_z_ratio 0.0
+	//cam_dist_to_target 1.0
+sock_end
+
+sock_start 03
+	ignore_socks 01
+	cam_blend_time 1.0
+	campos_seek 5.0
+	cam_x_offset 1.5
+	cam_y_offset 1.0
+	cam_z_offset 0.0
+	offset_blend_x_ratio 0.95
+	offset_blend_y_ratio 0.9
+	offset_blend_z_ratio 0.0
+	cam_dist_to_target 2.5
+sock_end
+
+sock_start 04
+	ignore_socks 01
+	cam_blend_time 1.0
+	campos_seek 5.0
+	cam_x_offset -1.5
+	cam_y_offset 1.0
+	cam_z_offset 0.0
+	offset_blend_x_ratio 0.95
+	offset_blend_y_ratio 0.9
+	offset_blend_z_ratio 0.0
+	cam_dist_to_target 3.5
+sock_end
+
+sock_start 05
+	ignore_socks 01
+	cam_blend_time 1.0
+	campos_seek 5.0
+	cam_x_offset -2.5
+	cam_y_offset 1.0
+	cam_z_offset 0.0
+	offset_blend_x_ratio 0.95
+	offset_blend_y_ratio 0.9
+	offset_blend_z_ratio 0.0
+	cam_dist_to_target 2.0
+sock_end

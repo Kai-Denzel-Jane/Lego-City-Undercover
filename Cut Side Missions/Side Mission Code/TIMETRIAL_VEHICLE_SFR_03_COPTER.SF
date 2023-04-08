@@ -1,0 +1,286 @@
+// Helicopter mission. Should be a simple case of when the mission is accepted we start a timer and reveal a bunch of stud rings around the city. RIngs disapear when the time runs out and player collects the studs.
+
+//Definitions
+WorldLevel wlCity ("Lego_City");
+
+Timer StageTimer(0);
+Timer MissionTimer(0);
+
+Global Vehicle cGlobalPoliceCopter("");
+Character cPlayer1("Player1");
+Character cPlayer2("Player2");
+Character cMissionPlayer("");
+
+Number nHeroMax(30000);
+Number nTimeLimit(90);
+Number nRings(27);
+
+Hotspot hMissionStart("BM_TimeTrial_SFR_03_Start", wlcity);
+
+Text tCountdown01("MISSION_GENERIC_COUNTDOWN_3");
+Text tCountdown02("MISSION_GENERIC_COUNTDOWN_2");
+Text tCountdown03("MISSION_GENERIC_COUNTDOWN_1");
+Text tCountdown04("MISSION_GENERIC_COUNTDOWN_GO");
+
+Text tAbandon("MISSION_COPTER_ABANDON");
+
+Text tCurrentRing("");
+Text tRingText("BM_Copter_SFR_01_StudRing_");
+
+State Setup()
+{
+	Conditions
+	{
+		if ( wlCity.IsLoaded() )
+		{
+			goto Base();
+		};	
+	};
+	Actions
+	{
+	};
+};
+
+State Base()
+{
+
+	Conditions
+	{
+		if (cGlobalPoliceCopter)
+		{
+			if (cPlayer1.GetVehicle() == cGlobalPoliceCopter)
+			{
+				if (MissionFocus(cPlayer1))
+				{
+					cMissionPlayer = cPlayer1;
+					goto OfferMission();
+				};
+			};
+			if (cPlayer2.GetVehicle() == cGlobalPoliceCopter)
+			{
+				if (MissionFocus(cPlayer2))
+				{
+					cMissionPlayer = cPlayer2;
+					goto OfferMission();
+				};
+			};			
+		};
+	};
+	Actions
+	{
+	// This is commented out until hotspot can be created
+	
+		hMissionStart.SetActive(true);
+		hMissionStart.NoCondition();
+		hMissionStart.SetHaloVisible(false);
+		hMissionStart.SetIcon("Race"); 
+	};
+};
+
+State OfferMission()
+{
+	Conditions
+	{
+		if ( PlayerPressedButton(cMissionPlayer, "A"))
+		{
+			UI_HideMissionPrompt();	
+			MissionActivate();
+		};	
+		if ( PlayerPressedButton(cMissionPlayer, "Y"))
+		{
+			UI_HideMissionPrompt();	
+			MissionUnfocus();
+			cGlobalPoliceCopter.SetLocked(false);
+			//cGlobalPoliceCopter.SetNoTagRelease(false);
+			cGlobalPoliceCopter.SetParked(false);			
+			//cMissionPlayer.ReleaseTakeOver(0.5, 1.3);
+			//cMissionPlayer.ExitVehicle();  //chrysp: patchup exit pos
+			cMissionPlayer = "";
+			goto Base();			
+		};				
+	};
+	Actions
+	{
+		hMissionStart.SetActive(false);
+		cGlobalPoliceCopter.SetParked(true);
+		//cGlobalPoliceCopter.SetNoTagRelease(true);
+		cGlobalPoliceCopter.SetLocked(true);
+		
+		UI_ShowMissionPrompt("Hud_Mission_Race_Race", "MISSION_INSTRUCTIONS_STUDRINGHUNT_COPTER", "MISSION_PROMPT", "MISSION_TITLE_TIMETRIAL");
+	};
+};
+
+
+State Cleanup()
+{
+	Number nDirection(0);
+//	Locator lHelicopterSpawn("SFR_PoliceHeliPad_HelicopterSpawnLoc", wlCity);
+	Text tcopter("Police_Helicopter_1");
+	
+	Actions
+	{
+		// cleanup stuff...
+		if (wlCity.IsLoaded())
+		{
+			if ( hMissionStart )
+			{
+				hMissionStart.SetActive(false);
+			};		
+
+			if (cGlobalPoliceCopter)
+			{
+				if ( cMissionPlayer ) 
+				{
+					if ( cMissionPlayer.GetVehicle() != cGlobalPoliceCopter )
+					{
+						cGlobalPoliceCopter.Deactivate();		
+						cGlobalPoliceCopter = "";
+					};
+				}
+				else
+				{
+					cGlobalPoliceCopter.Deactivate();		
+					cGlobalPoliceCopter = "";
+				};
+			};
+			
+			if ( !cGlobalPoliceCopter  ) 
+			{
+//				nDirection = lHelicopterSpawn.GetDirection();
+//				cGlobalPoliceCopter = CreateAIVehicle( tcopter, lHelicopterSpawn, "default", nDirection );  //chrysp: this needs to be patched up properly
+			};	
+		};
+		// All tidy, let the game know...
+		MissionCleanupEnd();
+	};
+};
+
+State Begin()
+{
+	Number n(0);
+	
+	Conditions
+	{
+	};
+	Actions
+	{
+		while (n < nRings)
+		{
+			n = n + 1;
+			tCurrentRing = (tRingText + n.ToText("Int 2"));
+			ChickenRingSetVisible(tCurrentRing, true);				
+		};
+		UI_SetMissionHelpText(tCountDown01, 0.8);
+		wait(1);
+		UI_SetMissionHelpText(tCountDown02, 0.8);
+		wait(1);
+		UI_SetMissionHelpText(tCountDown03, 0.8);
+		wait(1);
+		UI_SetMissionHelpText(tCountDown04, 3);		
+		MissionTimer = 0;
+		UI_ShowHUDTimer(True);
+		UI_SetHUDTimer(nTimeLimit, 1, MissionTimer);	
+		UI_SetHeroBarMax (nHeroMax);			
+		cGlobalPoliceCopter.SetParked(false);
+		cGlobalPoliceCopter.SetNoTagRelease(false);		
+		goto InProgress();
+	};
+};
+
+State InProgress()
+{	
+	Conditions
+	{
+		If (missionTimer > nTimeLimit)
+		{
+			goto TimeExpired();
+		};	
+		if (cMissionPlayer.GetVehicle() != cGlobalPoliceCopter)
+		{
+			goto AbandonCheck();
+		};
+	};
+	Actions
+	{
+	};
+};
+
+State AbandonCheck()
+{
+	Timer Abandon(0);
+	Number nAbandonLimit(5);
+	
+	Conditions
+	{
+		if (missionTimer > nTimeLimit)
+		{
+			goto TimeExpired();
+		};	
+		if (cMissionPlayer.GetVehicle() != cGlobalPoliceCopter)  AND  Abandon > nAbandonLimit)
+		{
+			goto MissionAborted();
+		};		
+		if (cMissionPlayer.GetVehicle() == cGlobalPoliceCopter))
+		{
+			UI_RemoveMissionHelpText();
+			goto InProgress();
+		};
+	};
+	Actions
+	{
+		UI_SetMissionHelpText(tAbandon, nAbandonLimit);	
+	};
+};
+
+State TimeExpired()
+{
+	Number n(0);
+	
+	Conditions
+	{
+	};
+	Actions
+	{
+		UI_StopHUDTimer();
+		UI_ShowHUDTimer(false);
+		while (n < nRings)
+		{
+			n = n + 1;
+			tCurrentRing = (tRingText + n.ToText("Int 2"));
+			ChickenRingSetVisible(tCurrentRing, false);			
+		};	
+		UI_SetStatsStuds();			
+		MissionComplete();				
+	};
+};
+
+State MissionAborted()
+{
+	Number n(0);
+	
+	Conditions
+	{
+	};
+	Actions
+	{
+		UI_SetStatsStuds();	
+		UI_StopHUDTimer();
+		UI_ShowHUDTimer(false);
+		while (n < nRings)
+		{
+			n = n + 1;
+			tCurrentRing = (tRingText + n.ToText("Int 2"));
+			ChickenRingSetVisible(tCurrentRing, false);			
+		};	
+		cMissionPlayer = "";
+		MissionAbort();				
+	};
+};
+
+Function LevelEnter (WorldLevel level)
+{
+};
+
+Function LevelExit (WorldLevel level)
+{
+};

@@ -1,0 +1,42 @@
+Character cPlayer1("player1");
+Area aTriggerRadio("Police_Radio_box_01");
+
+State Base( )
+{
+	Conditions
+	{
+		if ( cPlayer1.InArea(aTriggerRadio)  AND  cPlayer1.GetClass() == "Cop" ) 
+		{
+			goto Radio();
+		};
+	};
+	Actions
+	{
+	
+	};
+};
+
+
+State Radio( )
+{
+	//Timer t(0);
+	Conditions
+	{
+		//if ( t > 5.75  AND  !cPlayer1.InArea(aTriggerRadio) )
+		//{
+		//	goto Base();
+		//};
+	};
+	Actions
+	{
+		UI_StartMission();
+		UI_RadioCall( true );
+		Wait(0.25);
+		UI_SetMissionHelpText( "RADIO_MECHANIC", 5 );
+		Wait( 5.5 );
+		UI_RadioCall( false );
+	};
+};
+
+
+Base();

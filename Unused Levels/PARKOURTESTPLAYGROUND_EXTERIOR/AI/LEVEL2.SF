@@ -1,0 +1,40 @@
+State Base()
+{
+	Message mReset("msg_Level.JPGlide_Reset");
+	Conditions
+	{
+		if ( mReset == 1 )
+		{
+			mReset.Set(0);
+			goto ResetPlayer();
+		};
+	};
+};
+
+
+State ResetPlayer( )
+{
+	Actions
+	{
+		Character cPlayer1("player1");
+		Locator lReset("JetPackGlideReset");
+		Number nDirection;
+		cPlayer1.SetAiOverride(true);		
+		FadeScreen(true);
+		Wait(1);
+		
+		nDirection = lReset.GetDirection();
+		
+		cPlayer1.Teleport( lReset, nDirection );
+		FadeScreen(false);		
+		Wait(0.5);
+		
+		cPlayer1.Stop();
+		cPlayer1.SetAiOverride(false);	
+
+		goto Base();
+	};	
+};
+	
+	
+Base();

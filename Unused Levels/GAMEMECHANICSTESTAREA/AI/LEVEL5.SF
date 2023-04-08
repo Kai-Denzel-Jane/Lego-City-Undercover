@@ -1,0 +1,76 @@
+Timer scripttimer(0);
+// Camera Script
+
+State Base()
+{
+	Conditions
+	{
+		If( _message("msg_Level.detect_prog")== 1 ) { goto CheckedFirstSpot(); };
+		If( _message("msg_Level.detect_prog")== 2 ) { goto CheckedSecondSpot(); };
+		If( _message("msg_Level.detect_prog")== 3 ) { goto CheckedThirdSpot(); };
+		If( _message("msg_Level.detect_prog")== 4 ) { goto CheckedFourthSpot(); };
+	};
+	Actions
+	{
+	};
+};
+
+
+State CheckedFirstSpot()
+{
+	Conditions
+	{
+
+	};
+	Actions
+	{
+		PrintToScreen("x=0 y=0.7 time=2 'Nothing here...'");
+		goto Base();
+	};
+};
+
+
+State CheckedSecondSpot()
+{
+	Conditions
+	{
+
+	};
+	Actions
+	{
+		PrintToScreen("x=0 y=0.7 time=2 'Nothing here either...'");
+		goto Base();
+	};
+};
+
+
+State CheckedThirdSpot()
+{
+	Conditions
+	{
+
+	};
+	Actions
+	{
+		PrintToScreen("x=0 y=0.7 time=2 'Nor here...'");
+		goto Base();
+	};
+};
+
+
+State CheckedFourthSpot()
+{
+	Conditions
+	{
+
+	};
+	Actions
+	{
+		PrintToScreen("x=0 y=0.7 time=2 'Ah-ha!'");
+		goto Base();
+	};
+};
+
+
+
+Base();

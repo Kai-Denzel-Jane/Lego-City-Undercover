@@ -1,0 +1,7 @@
+character "Cop" player
+character "Fireman" player
+character "robber" resident
+character "miner" resident
+character "farmer" resident
+character "astronaut" resident
+character "worker" resident

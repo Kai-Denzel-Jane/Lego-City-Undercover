@@ -1,0 +1,31 @@
+//This script playes the first midtro cutscene
+
+Message mCutscene ("msg_level.Cutscene");
+Gizmo gDoor ("Entrance_LoadingBay");
+
+State Base( )
+{
+	Conditions
+	{
+		if (mCutscene == 1)
+		{
+			goto NextScene();
+		};
+	};
+	Actions
+	{	
+	};
+};
+
+State NextScene()
+{
+	Conditions
+	{
+	};
+	Actions
+	{
+		PlayCutscene(Cutscene="53_Midtro_TheShowdown_A");	
+	};
+};
+
+Base();

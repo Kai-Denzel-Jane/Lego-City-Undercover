@@ -1,0 +1,579 @@
+//Definitions
+
+Timer StageTimer(0);
+
+Character cPlayer1("Player1");
+Character cPlayer2("Player2");
+Character cPlayerX("");
+Character cDriver("");
+Character cFireTruck("");
+Character cFireTruckSeat("");
+
+Locator lFireTruckSpawn("");
+Locator lDestination01("");
+Locator lDestination02("");
+Locator lDestination03("");
+
+Text tVehicleType("Fire_Engine_2");
+Text tDriverType("Fireman");
+Text tTest("FIRETRUCK TEST");
+Text tWin("Win!");
+Text tFire("iFireTruck_SFR_01_Fire");
+
+Text tConvo_01 ("MISSION_FIRE01_CONVO_01");
+Text tConvo_02 ("MISSION_FIRE01_CONVO_02");
+Text tConvo_03 ("MISSION_FIRE01_CONVO_03");
+Text tConvo_04 ("MISSION_FIRE01_CONVO_04");
+Text tConvo_05 ("MISSION_FIRE01_CONVO_05");
+Text tPrompt ("MISSION_FIRE01_PROMPT");
+Text tClassP1("");
+Text tClassP2("");
+
+Number nConvo(0);
+Number nJustTalked(0);
+Number nHeroMax(14000);
+Number nRandomFireAward(2000);
+Number nMainFireAward(10000);
+Number nStage(1);
+Number nOptFire01(0);
+Number nOptFire02(0);
+Number nOptFire03(0);
+Number nOptFire04(0);
+
+Area aConvo01("");
+Area aConvo02("");
+
+Text tScript("driveToSubstitute");
+
+Area aMissionStart("");
+Hotspot hMissionStart("");
+
+//Gizmo gfire("fire01");
+
+WorldLevel wlCity ("Lego_City");
+WorldLevel wlMissionStart("SF_Residential_0921");
+
+Global Locator gLocDriveTo("");
+Global Number gNumDriveSpeed(5);
+
+Gizmo gFire01("");
+Gizmo gFire02("");
+Gizmo gFire03("");
+Gizmo gFire04("");
+Gizmo gFire05("");
+Gizmo gFire06("");
+Gizmo gFire07("");
+Gizmo gFire08("");
+Gizmo gFire09("");
+
+Number nFires(9); // Number of fires that need mass adjusting
+Gizmo g("");
+
+
+/////////////////////////////////////////////////////////////////////////////////
+////  SETUP STAGE
+/////////////////////////////////////////////////////////////////////////////////
+
+State Setup()
+{
+	Conditions
+	{
+		if ( wlCity.IsLoaded() )
+		{
+			goto DefineDefinitions();
+		};	
+	};
+	Actions
+	{
+	};
+};
+
+State DefineDefinitions()
+{
+	lFireTruckSpawn = "BM_Fire_SFR_01_SpawnFireTruck";
+	lDestination01 = "BM_Fire_SFR_01_CP01";
+	lDestination02 = "BM_Fire_SFR_01_CP02";
+	lDestination03 = "BM_Fire_SFR_01_CP03";	
+	aMissionStart = "BM_Fire_SFR_01_Start";
+	aConvo01 = "BM_Fire_SFR_01_Convo01";
+	aConvo02 = "BM_Fire_SFR_01_Convo02";
+	hMissionStart = "BM_Fire_SFR_01_HotSpot";
+	
+	gFire01 = "iFireTruck_SFR_01_Fire01";
+	gFire02 = "iFireTruck_SFR_01_Fire02";
+	gFire03 = "iFireTruck_SFR_01_Fire03";
+	gFire04 = "iFireTruck_SFR_01_Fire04";
+	gFire05 = "iFireTruck_SFR_01_Fire05";	
+	gFire06 = "iFireTruck_SFR_01_Fire06";
+	gFire07 = "iFireTruck_SFR_01_Fire07";
+	gFire08 = "iFireTruck_SFR_01_Fire08";
+	gFire09 = "iFireTruck_SFR_01_Fire09";	
+	Number n(1);
+
+	Conditions
+	{
+		if (n > nFires)
+		{
+			goto Base();
+		};
+	};
+	Actions
+	{	
+	// Turn off fire ... will go in Cleanup
+		While (n <= nFires)
+		{
+			g = (tFire + n.ToText("int 2"));			
+			g.SetVisible(false);
+			g.SetActive(false);		
+			n = n + 1;
+		};	
+		hMissionStart.SetHaloVisible(false);
+		hMissionStart.SetIcon("Bonus"); 
+		hMissionStart.SetActive(true);
+		hMissionStart.NoCondition();		
+	};
+};
+
+State WaitForReturnToTile()
+{
+	Conditions
+	{
+		if( wlMissionStart.IsLoaded() ) 
+		{ 
+			goto Base(); 
+		};
+	};
+	Actions
+	{
+		if ( cFireTruck ) 
+			{ 
+//				if ( cPlayer1.InVehicle() !=cFireTruck ) 
+//				{	
+//					cFireTruck.Deactivate();
+//					cFireTruck = "";
+//				};
+			};	
+	};	
+};
+
+State Base()
+{
+
+	Timer OfferTimer(0);
+
+	Conditions
+	{
+		if ( wlCity.IsLoaded())
+		{
+			if ( aMissionStart.Inside("Player1") AND !cPlayer1.InVehicle())
+			{
+				if (MissionFocus(cPlayer1))
+				{
+					goto PrepOfferMissionP1();
+				};
+			};
+		if ( aMissionStart.Inside("Player2") AND !cPlayer2.InVehicle())
+			{
+				if (MissionFocus(cPlayer2))
+				{
+					goto PrepOfferMissionP2();
+				};
+			};
+		};
+		if( !wlMissionStart.IsLoaded() ) 
+		{
+			goto WaitForReturnToTile(); 
+		};		
+		
+	};
+	Actions
+	{
+		Number nDirection(0);
+		
+		if ( !cFireTruck  ) 
+		{
+			nDirection = lFireTruckSpawn.GetDirection();
+			
+			cFireTruck = CreateCharacter( tVehicleType, lFireTruckSpawn, "default", nDirection );
+			cFireTruckSeat = CreateCharacter( tSeatType, lFireTruckSpawn, "default", nDirection );
+			Wait(1);
+			cFireTruck.CoupleVehicle(cFireTruckSeat, 1);	
+			cFireTruckSeat = cFireTruck.GetCoupled();
+			cFireTruck.SetParked(true);			
+		};		
+	};
+};
+
+State PrepOfferMissionP1()
+{
+
+	Timer OfferTimer(0);
+
+	Conditions
+	{
+		tClassP1 = cPlayer1.GetClass();
+		If (tClassP1 == "Fireman")
+		{
+			UI_RemoveMissionHelpText(); 
+			cPlayerX = cPlayer1;
+			Goto OfferMission();
+		};
+		If (tClassP1 != "Fireman" AND OfferTimer > 1.5)
+		{
+			OfferTimer = 0;
+			UI_SetMissionHelpText(tPrompt, 2);			
+		};	
+		if (!aMissionStart.Inside("Player1") OR cPlayer1.InVehicle())
+		{
+			MissionUnFocus();
+			goto Base();
+		};
+	};
+	Actions
+	{
+	};
+};
+
+State PrepOfferMissionP2()
+{
+
+	Timer OfferTimer(0);
+
+	Conditions
+	{
+		tClassP2 = cPlayer2.GetClass();
+		If (tClassP2 == "Fireman")
+		{
+			UI_RemoveMissionHelpText(); 
+			cPlayerX = cPlayer2;
+			Goto OfferMission();
+		};
+		If (tClassP2 != "Fireman" AND OfferTimer > 1.5)
+		{
+			OfferTimer = 0;
+			UI_SetMissionHelpText(tPrompt, 2);			
+		};	
+		if (!aMissionStart.Inside("Player2") OR cPlayer2.InVehicle())
+		{
+			MissionUnFocus();
+			goto Base();
+		};
+	};
+	Actions
+	{
+	};
+};
+
+State OfferMission()
+{
+	Conditions
+	{
+		if( PlayerPressedButton(cPlayerX, "Y") ) 
+		{ 
+			UI_HideMissionPrompt();	
+			MissionUnfocus();			
+			goto WaitForBase();
+		};
+
+		if( PlayerPressedButton(cPlayerX, "A") ) 
+		{ 
+			MissionActivate();			
+		};
+		if (!aMissionStart.Inside(cPlayerX))
+		{
+			UI_HideMissionPrompt();
+			MissionUnfocus();			
+			goto WaitForBase();
+		};
+		tClassP1 = cPlayer1.GetClass();	
+		if (tClassP1 != "Fireman" AND cPlayerX == "Player1")
+		{
+			UI_HideMissionPrompt();	
+			MissionUnfocus();
+			cPlayerX = "";			
+			goto Base();			
+		};	
+		tClassP2 = cPlayer2.GetClass();			
+		if (tClassP2 != "Fireman" AND cPlayerX == "Player2")
+		{
+			UI_HideMissionPrompt();	
+			MissionUnfocus();
+			cPlayerX = "";
+			goto Base();			
+		};				
+	};
+	Actions
+	{	
+		MissionFocus(cPlayerX);
+		UI_ShowMissionPrompt("Hud_Mission_Bonus_Fire", "MISSION_INSTRUCTIONS_FIRE", "MISSION_PROMPT", "MISSION_TITLE_FIRE");		
+	};
+};
+
+State WaitForBase()
+{
+	Conditions
+	{
+	};
+	Actions
+	{	
+		wait(5);
+		Goto Base();
+	};
+};
+
+/////////////////////////////////////////////////////////////////////////////////
+////  CLEANUP STAGE
+/////////////////////////////////////////////////////////////////////////////////
+
+State Cleanup()
+{	
+	Actions
+	{
+	// Turns off remaining fires, wont be needed when cleanup script is present
+		
+		Number n(6);
+		StageTimer = 0;
+		Number z(0);
+		if (wlCity.IsLoaded())
+		{
+			While (n <= nFires)
+			{
+				g = (tFire + n.ToText("int 2"));			
+				g.SetVisible(false);
+				g.SetActive(false);		
+				n = n + 1;
+			};		
+			if ( hMissionStart )
+			{
+				hMissionStart.SetActive(false);
+			};	
+		
+			if ( MissionWasCompleted() )
+			{
+				UI_SetMissionHelpText(tConvo_05, 3);
+				wait(3);
+			
+				if (cDriver)
+				{
+					if ( cDriver == cFireTruck.InVehicle() )
+					{
+//						cFireTruck.SetScript("traffic");
+					}
+					else
+					{
+						cDriver.Deactivate();
+//						cFireTruck.SetScript("KillOffScreen");
+					};
+				};
+			};
+		};
+		
+		MissionCleanupEnd();
+	};
+};
+
+
+/////////////////////////////////////////////////////////////////////////////////
+////  MISSION STAGE
+/////////////////////////////////////////////////////////////////////////////////
+
+
+State Begin()
+{
+	Number n(1);
+	Timer BeginTimer(0);
+	
+	Conditions
+	{
+		if ( cDriver.InVehicle() != cFireTruck AND ( cPlayer1.InVehicle() != cFireTruck OR cPlayer2.InVehicle() != cFireTruck ) AND BeginTimer > 3)
+		{
+			cDriver.TakeOver(cFireTruck);
+			cDriver.SetScript(tScript);				
+		};	
+	};
+	Actions
+	{
+		gLocDriveTo = "BM_Fire_SFR_01_CP03";	
+		UI_StartMission();	
+		UI_SetHeroBarMax(nHeroMax);	
+		hMissionStart.Trigger();		
+		Number nDirection(0);	
+		nDirection = lFireTruckSpawn.GetDirection();
+		cDriver = CreateCharacter( tDriverType, lFireTruckSpawn, "default", nDirection );	
+		wait(0.1);
+		cDriver.TakeOver(cFireTruck);
+		UI_SetMissionHelpText(tConvo_01, 3);
+		wait(3);
+		While (n <= nFires)
+		{
+			g = (tFire + n.ToText("int 2"));			
+			g.SetVisible(true);
+			g.SetActive(true);		
+			n = n + 1;
+		};						
+		wait(2);
+		cFireTruck.SetParked(false);		
+		goto Drive();
+	};
+};
+
+State Drive()
+{
+	Timer convoTimer(5);
+	
+	Conditions
+	{
+		if (cFireTruck.DistanceToXZ(gLocDriveTo) < 3.5 AND StageTimer > 18)
+		{
+			goto DestinationReached();
+		};
+		if (gFire06.HasFinished() AND nOptFire01 == 0)
+		{
+			nOptFire01 = 1;
+			Playergivestuds(nRandomFireAward);
+		};	
+		if (gFire07.HasFinished() AND nOptFire02 == 0)
+		{
+			nOptFire02 = 1;
+			Playergivestuds(nRandomFireAward);
+		};		
+		if (gFire08.HasFinished() AND nOptFire03 == 0)
+		{
+			nOptFire03 = 1;
+			Playergivestuds(nRandomFireAward);
+		};		
+		if (gFire09.HasFinished() AND nOptFire04 == 0)
+		{
+			nOptFire04 = 1;
+			Playergivestuds(nRandomFireAward);
+		};						
+		if (cDriver.InArea(aConvo01) AND nConvo == 0)
+		{
+			nConvo = 1;
+			nJustTalked = 1;
+			UI_SetMissionHelpText(tConvo_02, 3);
+			convoTimer = 0;
+		};
+		if (cDriver.InArea(aConvo02) AND nConvo == 1)
+		{
+			nConvo = 2;
+			nJustTalked = 1;
+			UI_SetMissionHelpText(tConvo_03, 3);
+			convoTimer = 0;	
+		};		
+		if (cDriver.InArea(aConvo02) AND nConvo == 2 AND nJustTalked == 0)
+		{
+			nConvo = 3;
+			nJustTalked = 1;
+			UI_SetMissionHelpText(tConvo_04, 3);
+			convoTimer = 0;			
+		};				
+		if ((!cDriver.InArea(aConvo01) OR !cDriver.InArea(aConvo02)) AND nJustTalked == 1 AND convoTimer > 8)
+		{
+			nJustTalked = 0;
+		};
+		if (cDriver.InVehicle() != cFireTruck) AND (cPlayer1.InVehicle() != cFireTruck OR cPlayer2.InVehicle() !=cFireTruck) )
+		{
+			cDriver.TakeOver(cFireTruck);
+			cDriver.SetScript(tScript);			
+			
+		};
+		if (gfire01.HasFinished() AND gfire02.HasFinished() AND gfire03.HasFinished() AND gfire04.HasFinished() AND gfire05.HasFinished())
+		{
+		
+			Playergivestuds(nMainFireAward);
+			gLocDriveTo = lFireTruckSpawn;			
+			cFireTruck.SetParked(false);	
+			cDriver.SetScript(tScript);					
+			UI_SetStatsStuds();	
+			MissionComplete();
+		};		
+	};
+	Actions
+	{
+		StageTimer = 0;
+		cDriver.SetScript(tScript);
+	};
+};
+
+State DestinationReached()
+{
+
+	Timer StopTimer(0);
+	
+	Conditions
+	{
+		if (gfire01.HasFinished() AND gfire02.HasFinished() AND gfire03.HasFinished() AND gfire04.HasFinished() AND gfire05.HasFinished())
+		{
+		
+			Playergivestuds(nMainFireAward);
+			gLocDriveTo = lFireTruckSpawn;			
+			cFireTruck.SetParked(false);	
+			cDriver.SetScript(tScript);					
+			UI_SetStatsStuds();	
+			MissionComplete();
+		};
+		if (gFire06.HasFinished() AND nOptFire01 == 0)
+		{
+			nOptFire01 = 1;
+			Playergivestuds(nRandomFireAward);
+		};	
+		if (gFire07.HasFinished() AND nOptFire02 == 0)
+		{
+			nOptFire02 = 1;
+			Playergivestuds(nRandomFireAward);
+		};		
+		if (gFire08.HasFinished() AND nOptFire03 == 0)
+		{
+			nOptFire03 = 1;
+			Playergivestuds(nRandomFireAward);
+		};		
+		if (gFire09.HasFinished() AND nOptFire04 == 0)
+		{
+			nOptFire04 = 1;
+			Playergivestuds(nRandomFireAward);
+		};				
+		if (nStage == 1 AND StopTimer > 9)
+		{
+			if (cDriver.InVehicle() != cFireTruck AND (cPlayer1.InVehicle() != cFireTruck) OR cPlayer2.InVehicle() != cFireTruck) )
+			{
+				cDriver.TakeOver(cFireTruck);
+				cDriver.SetScript(tScript);			
+			};		
+			nStage = 2;
+			gLocDriveTo = lDestination02;
+			cFireTruck.SetParked(false);
+			goto Drive();
+		};
+		if (nStage == 2 AND StopTimer > 5)
+		{
+			if (cDriver.InVehicle() != cFireTruck) AND (cPlayer1.InVehicle() != cFireTruck) OR cPlayer2.InVehicle() != cFireTruck) )
+			{
+				cDriver.TakeOver(cFireTruck);
+				cDriver.SetScript(tScript);			
+			};			
+			nStage = 3;
+			gLocDriveTo = lDestination01;
+			cFireTruck.SetParked(false);
+			goto Drive();
+		};	
+		if (nStage == 3 AND cDriver.InVehicle() != cFireTruck AND (cPlayer1.InVehicle() != cFireTruck OR cPlayer2.InVehicle() !=cFireTruck ) )
+		{
+			cDriver.TakeOver(cFireTruck);		
+		};			
+	};
+	Actions
+	{
+		cFireTruck.SetParked(True);
+//		cDriver.Stop();
+	};
+};
+
+
+Function LevelEnter (WorldLevel level)
+{
+};
+
+Function LevelExit (WorldLevel level)
+{
+};

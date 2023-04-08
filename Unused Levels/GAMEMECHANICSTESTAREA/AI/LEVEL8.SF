@@ -1,0 +1,79 @@
+Character cPlayer1("player1");
+Character cPlayer2("player2");
+
+Bool bPlayer1(false);
+Bool bPlayer2(false);
+
+Area aAllow("Area_Detective");
+
+Gizmo gDetectiveSpot("iDETECTIVE_CMPLX");
+
+
+// Toggles being able to equip the magnifying glass and not, based on each player being within the associated trigger areas
+State Base( ) 
+{
+	Conditions
+	{
+		if ( !bPlayer1 )
+		{
+			if ( cPlayer1.InArea(aAllow)  )
+			{
+				bPlayer1 = true;
+				AllowDetectiveMode(cPlayer1, bPlayer1);
+			};
+		}
+		else
+		{
+			if ( !cPlayer1.InArea(aAllow)  )
+			{
+				bPlayer1 = false;
+				AllowDetectiveMode(cPlayer1, bPlayer1);
+			};
+		};
+		
+		if ( !bPlayer2 )
+		{
+			if ( cPlayer2.InArea(aAllow)  )
+			{
+				bPlayer2 = true;
+				AllowDetectiveMode(cPlayer2, bPlayer2);
+			};
+		}
+		else
+		{
+			if ( !cPlayer2.InArea(aAllow)  )
+			{
+				bPlayer2 = false;
+				AllowDetectiveMode(cPlayer2, bPlayer2);
+			};
+		};
+		
+		// When the detective spot has been uncovered, go to the end state.
+		if ( gDetectiveSpot )
+		{
+			if ( gDetectiveSpot.GetOutput(0) )
+			{
+				goto Ended();
+			};
+		};		
+	};
+};
+
+// Stops any characters being able to equip the magnifying glass, which were previously allowed to due to being within this mechanic's area
+State Ended( )
+{
+	Actions
+	{
+		if ( cPlayer1.InArea(aAllow) )
+		{
+			AllowDetectiveMode(cPlayer1, false);
+		};
+		
+		if ( cPlayer2.InArea(aAllow) )
+		{
+			AllowDetectiveMode(cPlayer2, false);
+		};
+	};
+};
+
+Base();

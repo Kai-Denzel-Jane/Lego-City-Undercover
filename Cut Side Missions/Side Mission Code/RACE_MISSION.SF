@@ -1,0 +1,40 @@
+State Setup()
+{
+	Conditions
+	{
+	};
+	
+	Actions
+	{
+		// setup stuff...
+		// [NOTE: stuff done here must be un-done in Cleanup()]
+		
+	};
+};
+
+State Cleanup()
+{
+	Actions
+	{
+		// cleanup stuff...
+		
+
+		// All tidy, let the game know...
+		MissionCleanupEnd();
+	};
+};
+
+State Begin()
+{
+	Actions
+	{
+	};
+};
+
+Function LevelEnter (WorldLevel level)
+{
+};
+
+Function LevelExit (WorldLevel level)
+{
+};

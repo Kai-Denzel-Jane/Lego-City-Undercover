@@ -1,0 +1,544 @@
+WorldLevel wlCity ("Lego_City");
+WorldLevel wlMissionStart ("SF_Residential_1022");
+
+HotSpot hMissionStart("");
+
+Timer scripttimer(0);
+Timer missionTimer(0);
+Character cPlayer1("player1");
+Character cPlayer2("player2");
+Character cMissionPlayer("");
+Vehicle cRepairTruck("");
+
+Locator lVehicleSpawn("");						// Mission vehicle spawn locator
+
+Text tVehicleType("HazardTruck");											// Mission vehicle type
+
+// Decleration strings
+Text tSatNavLocator("BM_Repair_SFR_01_SAT");								// Locator for satnav prefix
+Text tHotSpot("BM_Repair_SFR_01_CP");										// Hotspot area prefix
+Text tHotSpotLarge("BM_Repair_SFR_01_A");									// Hotspot large area prefix		
+Text tPlayerTeleport("BM_Repair_SFR_01_PP");								// Player teleport area prefix
+Text tLampostFixed("RepairMissLampostFixed");								// Gizmo prefix for fixed lamposts
+Text tLampostBroken("RepairMissLampostBroken");								// Gizmo prefix for broken lamposts					
+
+Gizmo gLampFixed("");
+Gizmo gLampBroken("");
+
+// Debug message strings
+
+Text tReleaseScript("KillOffScreen");
+
+Number nStage(1);
+Number nMaxStage(2); // Number of repairs 
+Number nMaxDistance(15); // Max distance allowed from patient is 8 units
+Number nAbandonTime(20); // Abandon time of 15 seconds
+Number nMaxTime(600); // Set time given for mission to be 10 minutes
+
+Number nHeroMax(4500);
+Number nRepairStuds(1500);
+
+
+Bool bArrived(false); // checks if player has arrived or not
+
+/////////////////////////////////////////////////////////////////
+// Level Load
+/////////////////////////////////////////////////////////////////
+Function LevelEnter (WorldLevel level)
+{
+	
+	if ( level == wlCity )
+	{
+		hMissionStart = "BM_Repair_SFR_01_Start";
+		lVehicleSpawn = "BM_Repair_SFR_01_RepairTruckSpawn";	
+	};
+	
+	cPlayer1 = "player1";
+	cPlayer2 = "player2";
+};
+
+/////////////////////////////////////////////////////////////////////////////////
+////  SETUP STAGE
+/////////////////////////////////////////////////////////////////////////////////
+
+
+State Setup( )
+{
+	Conditions
+	{
+		if ( wlCity.IsLoaded() )
+		{
+			goto EnableHotspot();
+		};
+	};	
+	Actions
+	{
+	};
+};
+
+
+state EnableHotspot()
+{
+	Conditions
+	{
+	};	
+	Actions
+	{
+		hMissionStart = "BM_Repair_SFR_01_Start";
+		lVehicleSpawn = "BM_Repair_SFR_01_RepairTruckSpawn";						// Mission vehicle spawn locator
+				
+		hMissionStart.SetHaloVisible(false);
+		hMissionStart.SetIcon("Bonus"); 
+		hMissionStart.SetActive(true);
+		hMissionStart.NoCondition();
+		goto WaitForReturnToTile();
+	};
+};
+
+// Wait for the player to be in the tile
+State WaitForReturnToTile()
+{
+	Conditions
+	{
+		if( wlMissionStart.IsLoaded() ) 
+		{ 
+			if ( cRepairTruck ) 
+			{ 
+				if ( cPlayer1.GetVehicle() != cRepairTruck )
+				{
+					cRepairTruck.Destroy();					
+				};
+				cRepairTruck = "";
+			};
+			goto WaitForPlayerInVehicle(); 
+		};
+	};
+	Actions
+	{
+	};	
+};
+
+
+// Activate, then await the player to enter the taxi.
+State WaitForPlayerInVehicle()
+{
+	
+	Conditions
+	{
+		// Check to see if the player enters the mission's vehicle
+		if ( wlCity.IsLoaded() && cRepairTruck )
+		{
+			if ( cRepairTruck.GetDriver() )
+			{
+				cMissionPlayer = cRepairTruck.GetDriver();
+				if( MissionFocus( cMissionPlayer ) )
+				{					
+					goto GiveMissionPrompts(); 
+				}
+			}
+		}
+	}
+	Actions	
+	{	
+		if ( !cRepairTruck )
+		{
+			Number nDirection(0);
+			nDirection = lVehicleSpawn.GetDirection();
+
+			cRepairTruck = CreateAIVehicle( tVehicleType, "Civic", lVehicleSpawn, nDirection );
+			cRepairTruck.SetInvulnerable(true);
+			wait(0);
+			cRepairTruck.SetParked(true);	
+		};
+	};
+};
+
+// Checks to see if the player starts the mission or not - handles accepting the mission
+State GiveMissionPrompts()
+{
+	Number n(0);
+	
+	Conditions
+	{
+//		 Gets out of the vehicle before pressing LB to initiate mission...
+		if( cMissionPlayer.GetVehicle( ) != cRepairTruck ) 
+		{ 
+			cRepairTruck.SetParked(false);	
+			UI_HideMissionPrompt();			
+			MissionUnfocus();
+			goto WaitForPlayerInVehicle(); 
+		};
+
+		if( PlayerPressedButton(cMissionPlayer, "A") ) 
+		{ 
+			MissionActivate();  // START THE MISSION!			
+		};
+	};
+	Actions
+	{
+		UI_ShowMissionPrompt("Hud_Mission_Bonus_Repair", "MISSION_INSTRUCTIONS_REPAIR", "MISSION_PROMPT", "MISSION_TITLE_REPAIR");
+		nStage = 1;
+	};
+};
+
+
+/////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////
+
+
+state Cleanup()
+{
+	Actions
+	{
+		// cleanup stuff...
+		
+		if ( cRepairTruck )
+		{
+			cRepairTruck.Destroy();
+			cRepairTruck = "";
+		};
+		
+		if ( hMissionStart )
+		{
+			hMissionStart.SetActive(false);
+		};
+		
+		if ( MissionWasCompleted() )
+		{
+			SetSatNavDestination();
+		};
+		// All tidy, let the game know...
+		MissionCleanupEnd();
+	};
+};
+
+
+/////////////////////////////////////////////////////////////////////////////////
+//// Mission Loop
+/////////////////////////////////////////////////////////////////////////////////
+
+
+state Begin()
+{
+	Actions
+	{
+		UI_StartMission();
+		hMissionStart.Trigger();
+		cRepairTruck.SetParked(false);
+		cRepairTruck.SetLocked(false);
+		missionTimer = 0;
+		UI_SetHUDTimer( nMaxTime, 1 );
+		UI_ShowHUDTimer(true);
+		goto SpawnLampost();
+	};
+};
+
+
+
+State SpawnLampost( )
+{
+	Text t("MISSION_REPAIR_STAGEINSTR");
+	Hotspot hSpot(tHotSpot + nStage.ToText("int 2") );
+	Area aHotSpotLarge(tHotSpotLarge + nStage.ToText("int 2"));
+	Locator lSatNav(tSatNavLocator + nStage.ToText("int 2"));
+	Conditions
+	{
+		if ( cRepairTruck.InArea( aHotSpotLarge ) )
+		{
+			hSpot.SetActive(false);
+			cRepairTruck.SetParked(true);
+			goto RepairTruckSetup();
+		};
+		
+		if ( cMissionPlayer.GetVehicle( ) != cRepairTruck ) 
+		{ 
+			goto AbandonedCheck(); 
+		};
+		
+	};
+	Actions
+	{
+		if ( nStage != 1 )
+		{
+			UI_SetMissionCounter( (nStage - 1), nMaxStage, false ) ;
+			UI_ShowMissionCounter( true );
+			Wait(1.5);
+			UI_ShowMissionCounter( false );
+		};	
+		
+		
+		gLampFixed = tLampostFixed + nStage.ToText("int 2");
+		gLampBroken = tLampostBroken + nStage.ToText("int 2");
+	
+		gLampFixed.SetVisible(false);
+		gLampFixed.SetActive(false);
+		gLampBroken.SetVisible(true);
+		gLampBroken.SetActive(true);		
+		hSpot.SetActive(true);
+		hSpot.NoCondition();
+		hSpot.SetIcon("Bonus");
+		SetSatNavDestination( lSatNav );
+		UI_SetHeroBarMax(nHeroMax);
+		
+		UI_RadioCall( true );
+		Wait(0.25);
+		UI_SetMissionHelpText( t, 5 );
+		Wait( 5.5 );
+		UI_RadioCall( false );
+	};
+
+};
+
+State RepairTruckSetup()
+{
+	Area aHotSpotLarge(tHotSpotLarge + nStage.ToText("int 2"));
+	Locator lVehicle(tSatNavLocator + nStage.ToText("int 2"));
+	Locator lPlayer(tPlayerTeleport + nStage.ToText("int 2"));
+	Number n(0);
+	Conditions
+	{
+		if ( cMissionPlayer.GetVehicle( ) != cRepairTruck  AND  cMissionPlayer.DistanceToXZ( lVehicle ) > nMaxDistance ) 
+		{ 
+			goto AbandonedCheck(); 
+		};
+		
+		if ( cMissionPlayer.GetVehicle() == cRepairTruck )
+		{
+			cRepairTruck.SetParked(true);	
+		};
+		
+		if ( gLampBroken.HasFinished() ) 
+		{
+			gLampBroken.SetVisible(false);	
+			gLampBroken.SetActive(false); 
+			
+			gLampFixed.Reset();
+			gLampFixed.SetVisible(true);
+			
+			nStage = nStage + 1;
+			bArrived = false;
+			Playergivestuds(nRepairStuds);
+		
+			if ( nStage > nMaxStage ) 
+			{
+				
+				
+				goto MissionEnd();
+			}
+			else
+			{
+				goto ReturnToVehicle();
+			};
+			
+		};
+		
+		if ( missionTimer > nMaxTime ) { goto OutOfTime(); };
+	};
+	Actions
+	{
+		if ( !bArrived )
+		{
+			FadeScreen(true);
+			Wait(1);
+			
+			cMissionPlayer.ClearVehicle();
+			
+			n = lVehicle.GetDirection();
+			Wait(0.5);			
+			cRepairTruck.Teleport(lVehicle, n);
+			n = lPlayer.GetDirection();
+			cMissionPlayer.Teleport(lPlayer, n);
+			
+			
+			if ( cMissionPlayer == cPlayer1 )
+			{
+				PlayerSetCharacter(1, "ConstructionWorker");
+			}
+			else
+			{
+				PlayerSetCharacter(2, "ConstructionWorker");
+			};
+			
+			bArrived = true;
+			Wait(1);
+			FadeScreen(false);
+		};
+	};
+};
+
+// Prompt the player to return to their vehicle after they complete each fix
+State ReturnToVehicle( )
+{
+	Timer abandonTimer(0);
+	Conditions
+	{
+		if ( cMissionPlayer.GetVehicle( ) == cRepairTruck ) 
+		{ 
+			cRepairTruck.SetParked(false);
+			UI_RemoveMissionMessage();
+			goto SpawnLampost(); 
+		};
+		
+		if ( abandonTimer > nAbandonTime ) 
+		{ 
+			UI_RemoveMissionMessage();
+			goto AbandonMission(); 
+		};
+	};
+	Actions
+	{	
+		UI_SetMissionMessage("MISSION_REPAIR_RETURN_TO_VEHICLE");
+	};
+};
+
+////////////////////////////////////////
+///////////////////////////////////////
+
+// If the player remains out of the vehicle and moves far enough away from the spellit, or enters another vehicle, abandon the mission
+State AbandonedCheck( ) 
+{
+	Locator lVehicle(tSatNavLocator + nStage.ToText("int 2"));
+	Timer abandonTimer(0);
+	
+	Conditions
+	{
+		if ( ( cMissionPlayer.GetVehicle() AND cMissionPlayer.GetVehicle( ) != cRepairTruck )  OR  abandonTimer > nAbandonTime ) 
+		{ 
+			UI_RemoveMissionMessage();
+			goto AbandonMission(); 
+		};
+	
+		if ( cMissionPlayer.DistanceToXZ( lVehicle ) <= nMaxDistance  OR  cMissionPlayer.GetVehicle( ) == cRepairTruck ) 
+		{ 
+			UI_RemoveMissionMessage();
+			goto SpawnLampost(); 
+		};
+		
+	};
+	Actions
+	{
+		UI_SetMissionMessage("MISSION_GENERIC_RETURN_TO_MISSION");
+	};
+};
+
+
+// Tell the player they've abandoned the mission
+State AbandonMission( )
+{
+	Conditions
+	{
+	};
+	Actions
+	{
+		UI_EndMission("MISSION_GENERIC_ABANDONED", false);
+		goto HandleFailScreen();
+	};
+};
+
+
+
+// Mission ended due to player running out of time - Give out of time message and reset mission
+State OutOfTime( ) 
+{
+	Conditions
+	{
+		
+	};
+	Actions
+	{
+		UI_EndMission("MISSION_FAIL_TIMEOUT", false);
+		goto HandleFailScreen();
+	};
+};
+
+
+State HandleFailScreen( )
+{
+	Timer time(0);
+	Bool b(false);
+	Conditions
+	{
+		if ( time > 0.1  AND  ( PlayerPressedButton(cMissionPlayer, "A")  OR  PlayerPressedButton("Y") ) AND !b )
+		{
+			UI_ResetMission();
+			goto Reset();
+		}
+		else
+		{
+			if ( (b AND !cMissionPlayer.GetVehicle()) OR  PlayerPressedButton(cMissionPlayer, "A")  OR  PlayerPressedButton("Y") )
+			{
+				UI_ResetMission();
+				goto Reset();
+			};
+		};
+		
+	};
+	Actions
+	{
+		if ( cMissionPlayer.GetVehicle() ) 
+		{
+			b = true;
+		};	
+	};
+};
+
+
+
+// Player completed the mission
+State MissionEnd( )
+{
+	Conditions
+	{
+		//if ( UI_IsEndMissionComplete() )
+		//{
+		//	goto Reset();
+		//};
+	};
+	Actions
+	{	
+		// UI_EndMission("MISSION_COMPLETE", true);
+		goto Reset();
+	};
+};
+
+
+// Reset all mission assets
+State Reset( )
+{
+	Number n(1);
+	Text t("");
+	Conditions
+	{
+	};
+	Actions
+	{
+		
+		// REPLACE WITH BELOW WHILE LOOP WHEN gizmo.Reset() WORKS 
+			
+		UI_SetStatsStuds();		
+		while ( nMaxStage >= n )
+		{
+			gLampFixed = tLampostFixed + n.ToText("int 2");
+			gLampBroken = tLampostBroken + n.ToText("int 2");
+			gLampFixed.Reset();
+			gLampFixed.SetVisible(true);
+			gLampFixed.SetActive(true);
+			gLampBroken.SetVisible(false);
+			gLampBroken.SetActive(false);
+			n = n + 1;
+		};  
+		
+		SetHotSpot();
+		cRepairTruck.SetScript( tReleaseScript );
+		cRepairTruck = "";
+		if (  nStage > nMaxStage )
+		{
+			MissionComplete(); // NEEDS TO CHECK AGAINST MISSION COMPLETE STATUS AND FAIL / END MISSION IF MISSION FAILED / ABANDONED ONCE THAT STATE IS AVAILABLE		
+		}
+		else
+		{
+			MissionAbort();
+		};	
+	};
+};

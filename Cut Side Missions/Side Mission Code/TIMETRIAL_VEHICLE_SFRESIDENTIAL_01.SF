@@ -1,0 +1,474 @@
+	//////////////////////////////////////////////////////////////////////////////////////////////
+	// Definitions go here They are unique to each race and once setup should not be copied over//
+	//////////////////////////////////////////////////////////////////////////////////////////////
+	
+Timer RaceTime(0);
+
+Character cPlayer1("player1");
+Character cPlayer2("player2");
+Character cPlayerX("");
+Vehicle cRaceVehicle("");
+
+Area aRaceFinish("");
+HotSPot hRaceFinish("");
+Locator lVehicleSpawn ("");
+
+Number nTimeLimit(90);
+Number nCheckpoint(1);
+Number nCheckTotal(15); // This is the maxinum number of checkpoints + 1. After this is met the finish line state will be called#
+
+Number nStudAward(0);
+Number nTimeBonus(15); // This is the time that if they player beats, they get extra score multiplier for
+Number nTimeMultiplier(500); // Stud multiplier
+Number nTimeBonusMultiplier(1800); // stud multiplier for time that is beat over nTimeBonus
+Number nHeroTarget(10000); // True hero target to reach
+
+// Race Text
+
+Text tCheckpoint ("BM_TimeTrial_SFR_01_CP");
+Text tCurrentCheckpoint ("BM_TimeTrial_SFR_01_CP01");
+Text tRaceAbandoned("Race Abandoned");
+Text tCountdown01("MISSION_GENERIC_COUNTDOWN_3");
+Text tCountdown02("MISSION_GENERIC_COUNTDOWN_2");
+Text tCountdown03("MISSION_GENERIC_COUNTDOWN_1");
+Text tCountdown04("MISSION_GENERIC_COUNTDOWN_GO");
+Text tRacePrompt("Race to the finish line. Press A to accept or Y to Leave the vehicle");
+Text tRaceWon("Winner!");
+Text tTest("TEST!");
+Text tTest2("TEST2!");
+Text tLost("MISSION_RACE_LOST");
+Text tVehicleType ("Ophion");
+
+Area aCheckpoint ("");
+HotSpot hCheckpoint ("");
+HotSpot hMissionStart("");
+
+WorldLevel wlCity ("Lego_City");
+WorldLevel wlMissionStart("SF_Residential_1021");
+
+
+State DefineDefinitions()
+{
+	Conditions
+	{
+	};
+	Actions
+	{
+		aRaceFinish = "BM_TimeTrial_SFR_01_FinishLine";
+		hRaceFinish = "BM_TimeTrial_SFR_01_FinishLine";
+		lVehicleSpawn = "BM_TimeTrial_SFR_01_Spawn";
+		aCheckpoint = ( tCurrentCheckpoint );
+		hCheckpoint = ( tCurrentCheckpoint );
+		hMissionStart = "BM_TimeTrial_SFR_01_Start";
+		StreamedCharacterPreLoad (tVehicleType);
+		if (nCheckPoint < nCheckTotal)
+		{
+			tCurrentCheckpoint = (tCheckPoint + nCheckPoint.ToText("Int 2"));
+			hCheckpoint = ( tCurrentCheckpoint);
+			hCheckpoint.SetActive(false);		
+			nCheckpoint = nCheckpoint + 1;
+		};
+		
+		hMissionStart.SetActive(true);
+		hMissionStart.NoCondition();
+		hMissionStart.SetHaloVisible(false);
+		hMissionStart.SetIcon("Race"); 
+		goto WaitForReturnToTile();
+	};
+};
+
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Race Conditions and Actions, Because all actions/conditions are generic, these can be pasted over by the master script if changes are made.//
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Function LevelEnter (WorldLevel level)
+{
+	
+	if (!cPlayer1)
+	{
+		cPlayer1 = "player1";
+	};
+};
+
+	
+State Setup( )
+{
+	Conditions
+	{
+		if ( wlCity.IsLoaded() )
+		{
+			goto DefineDefinitions();
+		};
+	};	
+	Actions
+	{
+	};
+};
+
+// Wait for the player to be in the tile
+State WaitForReturnToTile()
+{
+	Conditions
+	{
+		if ( wlMissionStart.IsLoaded() ) 
+		{ 
+			goto WaitForPlayerInVehicle(); 
+		};
+	};
+	Actions
+	{
+		if ( cRaceVehicle ) 
+			{ 
+				if ( cPlayer1.GetVehicle() != cRaceVehicle  AND  cPlayer2.GetVehicle() != cRaceVehicle  )
+				{	
+					cRaceVehicle.Deactivate();
+					cRaceVehicle = "";
+				};
+			};	
+	};	
+};
+
+
+// Activate, then await the player to enter the taxi.
+State WaitForPlayerInVehicle()
+{
+	
+	Conditions
+	{
+//		 Check to see if the player enters the mission's vehicle		
+		if (wlCity.IsLoaded() )
+		{
+			if ( cRaceVehicle )
+			{
+				if ( cPlayer1.GetVehicle() ==  cRaceVehicle ) 
+				{ 
+					if (MissionFocus(cPlayer1))
+					{
+						cPlayerX = cPlayer1;
+						goto MissionPrompt(); 
+					};
+				};
+				if ( cPlayer2.GetVehicle() == cRaceVehicle ) 
+				{ 
+					if (MissionFocus(cPlayer2))
+					{
+						cPlayerX = cPlayer2;
+						goto MissionPrompt(); 
+					};
+				};				
+			};
+			
+			if ( !wlMissionStart.IsLoaded()  AND  cRaceVehicle ) 
+			{
+				goto WaitForReturnToTile(); 
+			};
+		};
+	};
+	Actions
+	{
+		Number nDirection(0);
+		Number nDirectionSeat(0);
+		if ( !cRaceVehicle  ) 
+		{
+			nDirection = lVehicleSpawn.GetDirection();
+			cRaceVehicle = CreateAIVehicle( tVehicleType, "SportsCar", lVehicleSpawn, nDirection );
+			wait(0);
+			cRaceVehicle.SetParked(true);
+
+		};	
+	};
+};
+
+
+State MissionPrompt()
+{
+
+	Conditions
+	{
+		if ( PlayerPressedButton(cPlayerX, "A"))
+		{
+			MissionActivate();
+		};
+		
+		if ( PlayerPressedButton(cPlayerX, "Y"))
+		{
+			UI_HideMissionPrompt();		
+			MissionUnfocus();
+			goto RaceDeclined();
+		};	
+	};
+	Actions
+	{
+		cRaceVehicle.SetLocked(true);
+		//cRaceVehicle.SetNoTagRelease(true);
+		UI_ShowMissionPrompt("Hud_Mission_Race_Race", "MISSION_INSTRUCTIONS_TIMETRIAL", "MISSION_PROMPT", "MISSION_TITLE_TIMETRIAL");	
+	};
+};
+
+State Cleanup()
+{
+	Actions
+	{
+		// cleanup stuff...
+		
+		if ( wlCity.IsLoaded() )
+		{		
+			if ( cRaceVehicle ) 
+			{
+				cRaceVehicle.Deactivate();
+				cRaceVehicle = "";
+			};		
+		};
+		// All tidy, let the game know...
+		MissionCleanupEnd();
+	};
+};
+
+State Begin()
+{
+	Conditions
+	{
+	};
+	Actions
+	{
+		UI_StartMission();
+		hMissionStart.SetActive(false);
+		UI_SetMissionHelpText(tCountDown01, 0.8);
+		wait(1);
+		UI_SetMissionHelpText(tCountDown02, 0.8);
+		wait(1);
+		UI_SetMissionHelpText(tCountDown03, 0.8);
+		wait(1);
+		UI_SetMissionHelpText(tCountDown04, 3);	
+		cRaceVehicle.SetParked(false);
+		RaceTime = 0;
+		UI_ShowHUDTimer(True);
+		UI_SetHUDTimer(nTimeLimit, 1, RaceTime);
+		nCheckpoint = 1;
+		tCurrentCheckpoint = (tCheckPoint + nCheckPoint.ToText("Int 2"));
+		aCheckpoint = (tCurrentCheckpoint);
+		hCheckpoint = (tCurrentCheckpoint);
+		hCheckpoint.SetActive(true);
+		UI_SetHeroBarMax (nHeroTarget);	
+		wait(0.1);
+		Goto Race();
+	};
+};
+
+State Race()
+{
+
+	Conditions
+	{
+	If (RaceTime > nTimeLimit)
+		{
+		goto RaceFailed();
+		};
+	If( aCheckpoint.Inside(cPlayerX) )
+		{
+		hCheckpoint.SetActive(false);		
+		nCheckPoint = nCheckPoint + 1;
+		goto CheckRaceFinished();
+		};
+	};
+	Actions
+	{
+	};
+};
+
+State CheckRaceFinished()
+{
+	Conditions
+	{
+		if (nCheckpoint < nCheckTotal)
+		{
+		goto SetNextCheckPoint;
+		};
+		if (nCheckpoint == nCheckTotal)
+		{
+		goto FinishLine();
+		};
+	};
+	Actions
+	{
+	};
+};
+
+state SetNextCheckPoint()
+{
+	Conditions
+	{
+	};
+	Actions
+	{
+	tCurrentCheckpoint = (tCheckPoint + nCheckPoint.ToText("Int 2"));
+	aCheckpoint = (tCurrentCheckpoint);
+	hCheckpoint = (tCurrentCheckpoint);
+	hCheckpoint.SetActive(true);
+	hCheckpoint.NoCondition();
+	goto Race();
+	};
+};
+
+State FinishLine()
+{
+	Conditions
+	{
+	If (RaceTime > nTimeLimit)
+		{
+		goto RaceFailed();
+		};
+	If( aRaceFinish.Inside(cPlayerX) )
+		{
+		goto RaceFinished();
+		};	
+	};
+	Actions
+	{
+	hRaceFinish.SetActive(true);
+	};
+};
+
+State RaceFinished()
+{
+	Conditions
+	{
+	};
+	Actions
+	{
+	Number nTotal(0);
+	nStudAward = nTimeLimit - RaceTime;	
+//	PrintToScreen(tRaceWon);
+	UI_StopHUDTimer();
+	UI_ShowHUDTimer(false);
+	//cRaceVehicle.SetNoTagRelease(false);
+	cRaceVehicle.SetLocked(false);
+	
+	If (nStudAward > nTimeBonus)
+		{
+		nTotal = (nTimeBonus * nTimeMultiplier);
+		ntotal = ntotal + ((nStudAward - nTimeBonus) * nTimeBonusMultiplier);
+		Playergivestuds(nTotal);
+		}
+		else
+		{
+		nTotal = nStudAward * nTimeMultiplier;
+		Playergivestuds(nTotal);
+		};
+	goto MissionEnd();		
+	};
+};
+
+State MissionEnd( )
+{
+	Conditions
+	{
+	};
+	Actions
+	{
+		// UI_EndMission("MISSION_COMPLETE", true);
+		goto Reset();
+	};
+};
+
+State RaceFailed()
+{
+	Conditions
+	{
+	If( PlayerPressedButton(cPlayerX, "A"))
+		{
+		UI_ResetMission(); 
+		Goto RaceReset();
+		};
+	
+	If( PlayerPressedButton(cPlayerX, "Y"))
+		{
+		UI_ResetMission(); 		
+		goto RaceDeclined();
+		};	
+		
+	If (nCheckPoint < nCheckTotal)
+		{
+			tCurrentCheckpoint = (tCheckPoint + nCheckPoint.ToText("Int 2"));
+			hCheckpoint = (tCurrentCheckpoint);
+			hCheckpoint.SetActive(false);
+			nCheckpoint = nCheckpoint + 1;
+		};
+	};
+	Actions
+	{
+	UI_EndMission("MISSION_FAIL_TIMEOUT", false);
+	UI_StopHUDTimer();
+	UI_ShowHUDTimer(false);
+	cRaceVehicle.SetParked(true);
+	//cRaceVehicle.SetNoTagRelease(true);		
+	cRaceVehicle.SetLocked(true);
+	};
+};
+
+State RaceReset()
+{
+	Conditions
+	{
+	};
+	Actions
+	{
+	Number nDirection(0);
+	nDirection = lVehicleSpawn.GetDirection();	
+	cRaceVehicle.Teleport(lVehicleSpawn, nDirection);
+	goto Begin();
+	};
+};
+
+////////////////////////////////////////
+// Deals with the race being declined //
+////////////////////////////////////////
+
+State RaceDeclined()
+{
+
+	Conditions
+	{
+
+	};
+	Actions
+	{
+	cRaceVehicle.SetParked(false);
+	//cRaceVehicle.SetNoTagRelease(false);
+	cRaceVehicle.SetLocked(false);
+	//cPlayerX.ReleaseTakeOver();
+	//cPlayerX.ExitVehicle();  //chrysp: fixup exit pos
+	Number nDirection(0);
+	nDirection = lVehicleSpawn.GetDirection();	
+	cRaceVehicle.Teleport(lVehicleSpawn, nDirection);
+	cPlayerX = "";
+	MissionAbort();
+	Goto WaitForPlayerInVehicle();
+	};
+};
+
+State Reset( )
+{
+	Conditions
+	{
+	};
+	Actions
+	{
+		UI_SetStatsStuds();	
+		SetSatNavDestination();
+		SetHotSpot();
+		UI_StopHUDTimer();
+		UI_ShowHUDTimer(false);	
+		cRaceVehicle = "";
+		MissionComplete(); // NEEDS TO CHECK AGAINST MISSION COMPLETE STATUS AND FAIL / END MISSION IF MISSION FAILED / ABANDONED ONCE THAT STATE IS AVAILABLE
+	};
+};
+
+Function LevelEnter (WorldLevel level)
+{
+};
+
+Function LevelExit (WorldLevel level)
+{
+};

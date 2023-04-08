@@ -1,0 +1,723 @@
+
+HotSpot hMissionStart("");
+Hotspot hCaptureArea("");
+
+Character cPlayer1("player1");
+Character cPlayer2("player2");
+Character cMissionPlayer("");
+
+Character cLiveStock01("");
+Character cLiveStock02("");
+Character cLiveStock03("");
+Character cLiveStock04("");
+Character cLiveStock05("");
+Vehicle cUFO;
+
+Locator lVehicleSpawn;
+Locator lSpawnLiveStock01;
+Locator lSpawnLiveStock02;
+Locator lSpawnLiveStock03;
+Locator lSpawnLiveStock04;
+Locator lSpawnLiveStock05;
+
+
+Area aTile01("");
+Area aTile02("");
+
+Area aTargetA("");
+Area aTargetB("");
+Area aUFO_OutOfBound("");
+// Debug messages
+Text tUI_StartMission("Press A to start the UFO abduction mission!");
+Text tMissionDesc("Use the UFO to abduct and corral the livestock! Press A to start");
+// Vehicle setup strings
+Text tVehicleType("UFO");
+// Declaration strings
+Number nTimeLimit(600); // Seconds allowed for the mission to be completed within
+Number nTargetsCaught(0);
+Number nMaxTargets(5);
+
+Number nHeroMax(10000);
+Number nLiveStockAward(2000);
+
+Timer scripttimer(0);
+Timer missionTimer(0);
+
+WorldLevel wlCity("Lego_City");
+WorldLevel wlFarmLands("WI_Farmlands_0507");
+WorldLevel wlFarmLands2("WI_Farmlands_0505");
+WorldLevel wlFarmLands3("WI_Farmlands_0506");
+
+Bool bLiveStockFree01(true);
+Bool bLiveStockFree02(true);
+Bool bLiveStockFree03(true);
+Bool bLiveStockFree04(true);
+Bool bLiveStockFree05(true);
+Bool bCounterOn(false);
+Number nLiveStockCaught01(0);
+Number nLiveStockCaught02(0);
+Number nLiveStockCaught03(0);
+Number nLiveStockCaught04(0);
+Number nLiveStockCaught05(0);	
+
+
+/////////////////////////////////////////////////////////////////
+// Level Load
+/////////////////////////////////////////////////////////////////
+Function LevelEnter (WorldLevel level)
+{	
+	cPlayer1 = "player1";
+	cPlayer2 = "player2";
+};
+
+/////////////////////////////////////////////////////////////////////////////////
+////  SETUP STAGE
+/////////////////////////////////////////////////////////////////////////////////
+
+
+
+State Setup( )
+{
+	Conditions
+	{
+		if ( wlCity.IsLoaded() )
+		{
+			goto EnableHotspot();
+		};
+	};	
+	Actions
+	{
+	};
+};
+
+
+state EnableHotspot( )
+{
+	Conditions
+	{
+	};	
+	Actions
+	{			
+		hMissionStart = "BM_UFO_FL_01_Start";
+		hCaptureArea = "BM_UFO_FL_01_CaptureArea";
+		
+		lVehicleSpawn = "BM_UFO_FL_01_SpawnUFO";
+		lSpawnLiveStock01 = "BM_UFO_FL_01_SpawnLiveStock01";
+		lSpawnLiveStock02 = "BM_UFO_FL_01_SpawnLiveStock02";
+		lSpawnLiveStock03 = "BM_UFO_FL_01_SpawnLiveStock03";
+		lSpawnLiveStock04 = "BM_UFO_FL_01_SpawnLiveStock04";
+		lSpawnLiveStock05 = "BM_UFO_FL_01_SpawnLiveStock05";
+
+
+		aTile01 = "WI_Farmlands01";
+		aTile02 = "WI_Farmlands02";
+		aUFO_OutOfBound = "BM_UFO_FL_01_OutOfBounds";
+
+		aTargetA = "BM_UFO_FL_01_LiveStockCylinder";
+		aTargetB = "BM_UFO_FL_01_LiveStockCube";
+
+		// setup stuff...
+		// [NOTE: stuff done here must be un-done in Cleanup()]
+		
+		hMissionStart.SetHaloVisible(false);
+		hMissionStart.SetIcon("Bonus");
+		hMissionStart.SetActive(true);
+		hMissionStart.NoCondition();		
+		goto WaitForReturnToTile();
+	};
+};
+
+
+// Wait for the player to be in the tile
+State WaitForReturnToTile()
+{
+	Conditions
+	{
+		if ( wlCity.IsLoaded() )
+		{
+			if( wlFarmLands.IsLoaded() ) 
+			{ 
+				// PrintToScreen("DEBUG: WaitForReturnToTile");
+							
+				if ( cUFO ) 
+				{ 
+					if ( cMissionPlayer )
+					{
+						if (cMissionPlayer.GetVehicle() != cUFO)
+						{
+							cUFO.Destroy();
+						};
+					}
+					else
+					{
+						cUFO.Destroy();
+					};
+				};
+
+				cUFO = "";
+				goto WaitForPlayerInVehicle(); 
+			};
+		};
+	};
+	Actions
+	{
+	};	
+};
+
+
+// Activate, then await the player to enter the taxi.
+State WaitForPlayerInVehicle()
+{
+	
+	Conditions
+	{
+		if ( wlCity.IsLoaded() )
+		{
+			//	Check to see if the player enters the mission's vehicle		
+			if ( cUFO )
+			{
+				if ( cPlayer1 )
+				{
+					if( cPlayer1.GetVehicle() == cUFO ) 
+					{ 
+						if (MissionFocus(cPlayer1))
+						{
+							cMissionPlayer = cPlayer1;
+							goto GiveMissionPrompts(); 
+						};
+					};
+				}
+				else
+				{
+					cPlayer1 = "player1";
+				};
+				
+				
+				if ( cPlayer2 )
+				{
+					if( cPlayer2.GetVehicle() == cUFO ) 
+					{ 
+						if (MissionFocus(cPlayer2))
+						{
+							cMissionPlayer = cPlayer2;
+							goto GiveMissionPrompts(); 
+						};
+					};
+				}
+				else
+				{
+					cPlayer2 = "player2";
+				};
+			};
+			
+			if( !wlFarmLands.IsLoaded() ) { goto WaitForReturnToTile(); };
+		};
+	};
+	Actions
+	{
+		UI_LoadMissionPrompt("Hud_Mission_Bonus_UFO"); 
+		
+		if ( !cUFO )
+		{
+			Number nDirection(0);
+			nDirection = lVehicleSpawn.GetDirection();
+			cUFO = CreateAIVehicle( tVehicleType, "Aircraft", lVehicleSpawn, nDirection );	
+			wait(0);
+			cUFO.SetParked(true);		
+		};
+	};
+};
+
+
+// Checks to see if the player starts the mission or not - handles accepting the mission
+State GiveMissionPrompts()
+{
+	Number n(0);
+	
+	Conditions
+	{
+//		 Gets out of the vehicle before pressing LB to initiate mission...
+		if( cMissionPlayer.GetVehicle() != cUFO ) 
+		{ 
+			cUFO.SetParked(false);
+			UI_HideMissionPrompt();
+			MissionUnfocus();
+			goto WaitForPlayerInVehicle(); 
+		};
+
+		if( PlayerPressedButton(cMissionPlayer, "A") ) 
+		{ 
+			MissionActivate();  // START THE MISSION!						
+		};
+	};
+	Actions
+	{
+		UI_ShowMissionPrompt("Hud_Mission_Bonus_UFO", "MISSION_INSTRUCTIONS_UFO", "MISSION_PROMPT", "MISSION_TITLE_UFO");	
+	};
+};
+
+/////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////
+
+
+state Cleanup()
+{
+	Actions
+	{
+		// cleanup stuff...
+		if ( cLiveStock01 )
+		{
+			cLiveStock01.Kill();
+			cLiveStock01 = "";
+		};
+		
+		if ( cLiveStock02 )
+		{
+			cLiveStock02.Kill();
+			cLiveStock02 = "";
+		};
+		
+		if ( cLiveStock03 )
+		{
+			cLiveStock03.Kill();
+			cLiveStock03 = "";
+		};
+		
+		if ( cLiveStock04 )
+		{
+			cLiveStock04.Kill();
+			cLiveStock04 = "";
+		};
+		
+		if ( cLiveStock05 )		
+		{
+			cLiveStock05.Kill();
+			cLiveStock05 = "";
+		};
+		
+		if ( cUFO )
+		{
+			cUFO.Destroy();
+			cUFO = "";
+		};
+		
+		if  ( hMissionStart )
+		{
+			hMissionStart.SetActive(false);
+		};
+		if (hCaptureArea)
+		{
+			hCaptureArea.SetActive(false);
+		};
+		// All tidy, let the game know...
+		MissionCleanupEnd();
+	};
+};
+
+
+/////////////////////////////////////////////////////////////////////////////////
+//// Mission Loop
+/////////////////////////////////////////////////////////////////////////////////
+
+
+state Begin()
+{
+	Actions
+	{
+		UI_StartMission();
+		hMissionStart.Trigger();
+		hCaptureArea.SetActive(true);
+		hCaptureArea.NoCondition();
+		cUFO.SetParked(false);
+		cMissionPlayer.SetNoTagRelease(false);
+		missionTimer = 0;
+		UI_SetHUDTimer( nTimeLimit, 1, missionTimer );
+		UI_ShowHUDTimer(true);
+		goto AbductCheck();	
+	};
+};
+
+
+State AbductCheck()
+{
+	Text tDebug("");
+	Timer ResetCounterTime(0);
+
+	Conditions
+	{		
+		if ( cLiveStock01 )
+		{
+			if ( bLiveStockFree01 ) 
+			{
+				if ( cLiveStock01.InArea( aTargetA )  AND  cLiveStock01.InArea( aTargetB ) ) 
+				{
+					nTargetsCaught = nTargetsCaught + 1;
+					UI_SetMissionCounter( nTargetsCaught, nMaxTargets, false, 1.5  );
+					UI_ShowMissionCounter( true );
+					ResetCounterTime = 0;			
+					bCounterOn = true;
+					bLiveStockFree01 = false;
+					if (nLiveStockCaught01 == 0)
+					{
+						nLiveStockCaught01 = 1;
+						Playergivestuds(nLiveStockAward);
+					};
+				};
+			}
+			else
+			{
+				if ( !cLiveStock01.InArea( aTargetA )  OR  !cLiveStock01.InArea( aTargetB ) ) 
+				{
+					nTargetsCaught = nTargetsCaught - 1;
+					UI_SetMissionCounter( nTargetsCaught, nMaxTargets, false, 1.5  );
+					UI_ShowMissionCounter( true );
+					ResetCounterTime = 0;			
+					bCounterOn = true;
+					bLiveStockFree01 = true;
+				};
+			};
+		};
+		
+		
+		if ( cLiveStock02 )
+		{
+			if ( bLiveStockFree02 ) 
+			{
+				if ( cLiveStock02.InArea( aTargetA )  AND  cLiveStock02.InArea( aTargetB ) ) 
+				{
+					nTargetsCaught = nTargetsCaught + 1;
+					UI_SetMissionCounter( nTargetsCaught, nMaxTargets, false, 1.5  );
+					UI_ShowMissionCounter( true );
+					ResetCounterTime = 0;			
+					bCounterOn = true;
+					bLiveStockFree02 = false;
+					if (nLiveStockCaught02 == 0)
+					{
+						nLiveStockCaught02 = 1;
+						Playergivestuds(nLiveStockAward);
+					};					
+				};
+			}
+			else
+			{
+				if ( !cLiveStock02.InArea( aTargetA )  OR  !cLiveStock02.InArea( aTargetB ) )
+				{
+					nTargetsCaught = nTargetsCaught - 1;
+					UI_SetMissionCounter( nTargetsCaught, nMaxTargets, false, 1.5  );
+					UI_ShowMissionCounter( true );
+					ResetCounterTime = 0;			
+					bCounterOn = true;
+					bLiveStockFree02 = true;
+				};
+			};
+		};
+		
+		
+		if ( cLiveStock03 )
+		{
+			if ( bLiveStockFree03 ) 
+			{
+				if ( cLiveStock03.InArea( aTargetA )  AND  cLiveStock03.InArea( aTargetB ) ) 
+				{
+					nTargetsCaught = nTargetsCaught + 1;
+					UI_SetMissionCounter( nTargetsCaught, nMaxTargets, false, 1.5  );
+					UI_ShowMissionCounter( true );
+					ResetCounterTime = 0;			
+					bCounterOn = true;
+					bLiveStockFree03 = false;
+					if (nLiveStockCaught03 == 0)
+					{
+						nLiveStockCaught03 = 1;
+						Playergivestuds(nLiveStockAward);
+					};								
+				};
+			}
+			else
+			{
+				if ( !cLiveStock03.InArea( aTargetA )  OR  !cLiveStock03.InArea( aTargetB ) )
+				{
+					nTargetsCaught = nTargetsCaught - 1;
+					UI_SetMissionCounter( nTargetsCaught, nMaxTargets, false, 1.5  );
+					UI_ShowMissionCounter( true );
+					ResetCounterTime = 0;			
+					bCounterOn = true;
+					bLiveStockFree03 = true;
+				};
+			};
+		};
+		
+		
+		if ( cLiveStock04 )
+		{
+			if ( bLiveStockFree04 ) 
+			{
+				if ( cLiveStock04.InArea( aTargetA )  AND  cLiveStock04.InArea( aTargetB ) ) 
+				{
+					nTargetsCaught = nTargetsCaught + 1;
+					UI_SetMissionCounter( nTargetsCaught, nMaxTargets, false, 1.5  );
+					UI_ShowMissionCounter( true );
+					ResetCounterTime = 0;			
+					bCounterOn = true;
+					bLiveStockFree04 = false;
+					if (nLiveStockCaught04 == 0)
+					{
+						nLiveStockCaught04 = 1;
+						Playergivestuds(nLiveStockAward);
+					};								
+				};
+			}
+			else
+			{
+				if ( !cLiveStock04.InArea( aTargetA )  OR  !cLiveStock04.InArea( aTargetB ) ) 
+				{
+					nTargetsCaught = nTargetsCaught - 1;
+					UI_SetMissionCounter( nTargetsCaught, nMaxTargets, false, 1.5  );
+					UI_ShowMissionCounter( true );
+					ResetCounterTime = 0;			
+					bCounterOn = true;
+					bLiveStockFree04 = true;
+				};
+			};
+		};
+		
+		
+		
+		if ( cLiveStock05 )
+		{
+			if ( bLiveStockFree05 ) 
+			{
+				if ( cLiveStock05.InArea( aTargetA )  AND  cLiveStock05.InArea( aTargetB ) ) 
+				{
+					nTargetsCaught = nTargetsCaught + 1;
+					UI_SetMissionCounter( nTargetsCaught, nMaxTargets, false, 1.5  );
+					UI_ShowMissionCounter( true );
+					ResetCounterTime = 0;			
+					bCounterOn = true;
+					bLiveStockFree05 = false;
+					if (nLiveStockCaught05 == 0)
+					{
+						nLiveStockCaught05 = 1;
+						Playergivestuds(nLiveStockAward);
+					};								
+				};
+			}
+			else
+			{
+				if ( !cLiveStock05.InArea( aTargetA )  OR  !cLiveStock05.InArea( aTargetB ) ) 
+				{
+					nTargetsCaught = nTargetsCaught - 1;
+					UI_SetMissionCounter( nTargetsCaught, nMaxTargets, false, 1.5  );
+					UI_ShowMissionCounter( true );
+					ResetCounterTime = 0;			
+					bCounterOn = true;
+					bLiveStockFree05 = true;
+				};
+			};
+		};
+		
+		
+		if ( bCounterOn  AND  ResetCounterTime > 2.5 )
+		{
+			UI_ShowMissionCounter( false );
+			bCounterOn = false;
+		};
+		
+		if( nTargetsCaught >= nMaxTargets ) { goto FinishedMission(); };
+		
+		if( cMissionPlayer.GetVehicle() != cUFO OR !cMissionPlayer.InArea(aUFO_OutOfBound)) { goto AbandonedWaitForTimer(); };
+		
+		if( missionTimer > nTimeLimit ) { goto OutOfTime(); };		
+	};
+	Actions
+	{
+		Number nDirection(0);
+		UI_SetHeroBarMax(nHeroMax);
+		if (cLiveStock01 == "")
+		{
+			nDirection = lSpawnLiveStock01.GetDirection();	
+			cLiveStock01 = CreateAICharacter( "BusinessMan", "Pedestrian", lSpawnLiveStock01, nDirection );
+		};
+		if (cLiveStock02 == "")
+		{
+			nDirection = lSpawnLiveStock02.GetDirection();
+			cLiveStock02 = CreateAICharacter( "BusinessMan", "Pedestrian", lSpawnLiveStock02, nDirection );
+		};
+		if (cLiveStock03 == "")
+		{		
+			nDirection = lSpawnLiveStock03.GetDirection();
+			cLiveStock03 = CreateAICharacter( "BusinessMan", "Pedestrian", lSpawnLiveStock03, nDirection );
+		};
+		if (cLiveStock04 == "")
+		{		
+			nDirection = lSpawnLiveStock04.GetDirection();
+			cLiveStock04 = CreateAICharacter( "BusinessMan", "Pedestrian", lSpawnLiveStock04, nDirection );
+		};
+		if (cLiveStock05 == "")
+		{		
+			nDirection = lSpawnLiveStock05.GetDirection();
+			cLiveStock05 = CreateAICharacter( "BusinessMan", "Pedestrian", lSpawnLiveStock05, nDirection );		
+		};
+	};
+};
+
+
+// ---------------- Out Of Time ---------------- ;
+// Called if the timer reaches 0
+State OutOfTime()
+{
+	Conditions
+	{
+	};
+	Actions
+	{
+		cUFO.SetParked(true);
+		cMissionPlayer.SetNoTagRelease(true);
+		UI_StopHUDTimer();
+		UI_ShowHUDTimer(false);
+		UI_EndMission("MISSION_FAIL_TIMEOUT", false);
+		goto HandleFailScreen();
+	};
+};
+
+
+// Wait for the timer to get to 5 seconds...
+State AbandonedWaitForTimer()
+{
+	Timer tAbandon(0);
+	Conditions
+	{
+//		 If player gets back into the pizza bike, don't reinitialise the mission, just goes back to WaitForNextCheckpoint state.
+		if( cMissionPlayer.GetVehicle() == cUFO AND cMissionPlayer.InArea(aUFO_OutOfBound) ) 
+		{ 
+			UI_RemoveMissionMessage();
+			goto AbductCheck(); 
+		};
+//		 If the player enters any vehicle other than the race car, immediately abandon the mission.
+		if( cMissionPlayer.GetVehicle()  AND  cMissionPlayer.GetVehicle() != cUFO ) 
+		{ 
+			UI_RemoveMissionMessage();
+			goto Abandoned(); 
+		};
+		if( tAbandon > 7.5 ) 
+		{ 
+			UI_RemoveMissionMessage();
+			goto Abandoned(); 
+		};
+		If (!wlFarmLands.IsLoaded() AND !wlFarmLands2.IsLoaded() AND !wlFarmLands3.IsLoaded())
+		{
+			goto Abandoned();
+		};
+	};
+	Actions
+	{
+		UI_SetMissionMessage("MISSION_GENERIC_RETURN_TO_MISSION");
+	};
+};
+
+
+// Player has officially abandoned the mission.
+State Abandoned()
+{
+	Conditions
+	{
+	};
+	Actions
+	{
+//		 Reset the mission and cleanup anything being used
+		UI_StopHUDTimer();
+		UI_ShowHUDTimer(false);
+		cUFO.SetParked(true);		
+		UI_EndMission("MISSION_GENERIC_ABANDONED", false);
+		goto HandleFailScreen();
+	};
+};
+
+
+State HandleFailScreen( )
+{
+	Timer time(0);
+	Bool b(false);
+	Conditions
+	{
+		if ( time > 0.1  AND  ( PlayerPressedButton(cMissionPlayer, "A")  OR  PlayerPressedButton("Y") ) AND !b )
+		{
+			UI_ResetMission();
+			goto ResetMission();
+		}
+		else
+		{
+			if ( (b AND !cMissionPlayer.GetVehicle()) OR  PlayerPressedButton(cMissionPlayer, "A")  OR  PlayerPressedButton("Y") )
+			{
+				UI_ResetMission();
+				goto ResetMission();
+			};
+		};
+		
+	};
+	Actions
+	{
+		if ( cMissionPlayer.GetVehicle() ) 
+		{
+			b = true;
+		};	
+	};
+};
+
+
+
+// Handles Mission complete
+State FinishedMission()
+{
+	Conditions
+	{
+	};
+	Actions
+	{		
+		UI_StopHUDTimer();
+		UI_ShowHUDTimer(false);	
+		// UI_EndMission("MISSION_COMPLETE", true);
+		goto ResetMission();
+	};
+};
+
+
+// Reset everything in the mission so it's in a state to be restarted
+State ResetMission()
+{
+	Conditions
+	{
+	};
+	Actions
+	{
+		UI_SetStatsStuds();		
+		hCaptureArea.SetActive(false);		
+		Wait(2.5);
+		FadeScreen(true);		
+		Wait(1);
+		cLiveStock01.Kill();
+		cLiveStock02.Kill();
+		cLiveStock03.Kill();
+		cLiveStock04.Kill();
+		cLiveStock05.Kill();		
+		cUFO.SetParked(false);
+		cUFO.SetLocked(false);
+		cMissionPlayer.ReleaseTakeOver();
+		// cUFO.Deactivate();
+		// Number nDirection(0);
+		// nDirection = lVehicleSpawn.GetDirection();
+		// cUFO = CreateCharacter( tVehicleType, lVehicleSpawn, "default", nDirection );	
+		
+		Wait(2);
+		FadeScreen(false);
+		if ( nTargetsCaught >= nMaxTargets )
+		{
+			MissionComplete(); // NEEDS TO CHECK AGAINST MISSION COMPLETE STATUS AND FAIL / END MISSION IF MISSION FAILED / ABANDONED ONCE THAT STATE IS AVAILABLE
+		}
+		else
+		{
+			MissionAbort();
+		};	
+		// goto WaitForPlayerInVehicle();
+	};
+};

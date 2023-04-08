@@ -1,0 +1,19 @@
+// Player Characters ************************************
+
+character "Cop" player
+
+character "Novelty_FreezeBall" resident 
+character "INDUSTRIAL_ATLAS_TRAILER" resident 
+character "TRAINS_CYDONIA_CAB1" resident 
+character "TRAINS_CYDONIA_CARRIAGE" resident 
+character "TRAINS_CYDONIA_CAB2" resident
+character "TRAINS_CYDONIA_CAB2" resident
+character "Emplacements_Grasper" resident
+character "Emplacements_Worker" resident
+character "Industrial_Crawler" resident
+character "Novelty_Behemoth" resident
+character "Industrial_Brawnbox" resident
+character "Novelty_Bottlerocket" resident
+
+//-----------------------------------------------
+//-----------------------------------------------

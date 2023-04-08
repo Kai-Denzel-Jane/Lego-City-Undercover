@@ -1,0 +1,39 @@
+Timer scripttimer(0);
+
+
+// REPAIR TRUCK SCRIPT
+
+State Base()
+{
+	Conditions
+	{
+		
+	};
+	Actions
+	{
+		_CoupleVehicles("'body=Civic_HazardTruck' 'trailer=Civic_HazardTruck_Passenger' 'locator=1'");
+	
+		_Deactivate("character = MissionRepairTruck");
+		_Deactivate("character = MissionRepairPassenger");
+		
+		_wait("1.0");
+		
+		goto ActivateVehicle();
+	};
+};
+
+
+State ActivateVehicle()
+{
+	Conditions
+	{
+	
+	};
+	Actions
+	{
+		_Activate("character=MissionRepairTruck");
+		_Activate("character=MissionRepairPassenger");
+	};
+};
+
+Base();

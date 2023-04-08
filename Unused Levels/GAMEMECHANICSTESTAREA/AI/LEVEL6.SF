@@ -1,0 +1,188 @@
+Gizmo gInvestigate("iDETECTIVE_CMPLX");  //  ENSURE THIS STRING MATCHES THE PREFIX FOR YOUR TRUE DETECTIVE REFERENCE
+
+Text tFakeDetect("iDETECTIVE_FALSE_CMPLX");  //  ENSURE THIS STRING MATCHES THE PREFIX FOR YOUR FAKE DETECTIVE REFERENCES - BY DEFAULT IT WILL DO
+Text tFootPrints("iDETECTIVE_CMPLX_FOOTPRINT");  			//  ENSURE THIS STRING MATCHES THE PREFIX FOR YOUR FOOTPRINT REFERENCES - BY DEFAULT IT WILL DO
+
+Gizmo gPickup("DETECTIVE_PU");		// SET THIS TO THE NAME OF YOUR PICKUP GIZMO INSTANCE!		  
+											  
+Text tCharType("Cop");	
+Bool bCop(true);
+Bool bCheck( true );
+
+Gizmo questions("iDETECTIVE_CMPLX.DETECTIVE_TRUE_SW");		// SET THIS TO THE NAME OF YOUR DETECTIVE SWITCH COMPLEX - BY DEFAULT IT WILL MATCH, FOR THE SECOND ONE IN THE LEVEL IT WILL BE "iDETECTIVE_CMPLX1.DETECTIVE_TRUE_SW", THEN ""iDETECTIVE_CMPLX2.DETECTIVE_TRUE_SW", ETC.
+
+Number nFirstDetectiveSpotIndex(0);		// IF YOU HAVE MORE THAN ONE DETECTIVE SPOT IN YOUR LEVEL, THEN THIS IS SET TO THE SUM OF THE "nNumberOfFakeDetectiveSpots" VALUES FOR ALL THE PREVIOUS ONES.
+Number nNumberOfFakeDetectiveSpots(13);  //  CHANGE THIS NUMBER TO HOW MANY FAKE DETECTIVE SPOTS YOU HAVE i.e. iDETECTIVE_FALSE_CMPLX_<the number>
+
+Number nFirstFootPrintIndex(0);		// IF YOU HAVE MORE THAN ONE DETECTIVE SPOT IN YOUR LEVEL, THEN THIS IS SET TO THE SUM OF THE "nNumberOfFootPrints" VALUES FOR ALL THE PREVIOUS ONES.
+Number nNumberOfFootPrints(11);			 // CHANGE THIS NUMBER TO SET HOW MANY FOOTPRINTS THERE ARE i.e. iDETECTIVE_FALSE_CMPLX_FOOTPRINT_<the number>
+
+Character cPlayer1("player1");
+
+State Base( )
+{
+	Number n(nFirstFootPrintIndex);
+	Gizmo g("");
+	Conditions
+	{
+	};
+	Actions
+	{
+		gPickup.SetActive(false);
+		gPickup.SetVisible(false);
+
+		questions.SetVisible(false);
+
+		While ( n < (nFirstFootPrintIndex + nNumberOfFootPrints) )  
+		{
+			if ( n == 0 )
+			{
+				g = ( tFootPrints );
+			}
+			elseif ( n < 10 )
+			{
+				g = ( "" + tFootPrints + n.ToText("int 1") );
+			}
+			elseif ( n < 100 )
+			{
+				g = ( "" + tFootPrints + n.ToText("int 2") );			
+			}
+			elseif ( n < 1000 )
+			{
+				g = ( "" + tFootPrints + n.ToText("int 3") );
+			}
+			elseif ( n < 10000 ) 
+			{
+				g = ( "" + tFootPrints + n.ToText("int 4") );
+			};
+			
+			
+			g.SetVisible(false);
+			n = n + 1;
+		};
+
+		goto LoopCheck();
+	};
+};
+
+
+State LoopCheck( )
+{
+	
+	Conditions
+	{
+		if ( tCharType != cPlayer1.GetClass() )
+		{
+			tCharType = cPlayer1.GetClass();
+			// PrintToScreen( tCharType );
+			if ( tCharType == "Cop")
+			{
+				bCop = true;
+			}
+			else
+			{
+				bCop = false;
+			};
+
+			if ( bCop != bCheck )
+			{
+				bCheck = bCop;
+				goto LoopCheck();
+			};			
+		};
+		
+		// if ( gInvestigate.HasFinished() )
+		if ( gInvestigate.GetOutput(0) )
+		{
+			goto EndCheck();
+		};
+
+	};
+	Actions
+	{
+		Text t("");
+		Number n(nFirstDetectiveSpotIndex);
+		Gizmo g("");
+		
+		/*
+		While ( n < (nFirstDetectiveSpotIndex + nNumberOfFakeDetectiveSpots) )  
+		{
+	
+			if ( n == 0 )
+			{
+				g = ( tFakeDetect );
+			}
+			elseif ( n < 10 )
+			{
+				g = ( "" + tFakeDetect + n.ToText("int 1") );
+			}
+			elseif ( n < 100 )
+			{
+				g = ( "" + tFakeDetect + n.ToText("int 2") );			
+			}
+			elseif ( n < 1000 )
+			{
+				g = ( "" + tFakeDetect + n.ToText("int 3") );
+			}
+			elseif ( n < 10000 ) 
+			{
+				g = ( "" + tFakeDetect + n.ToText("int 4") );
+			};
+			
+			
+			g.SetVisible(!bCop);
+			g.SetActive(!bCop);
+			n = n + 1;
+		};
+		*/
+		gInvestigate.SetVisible( bCop );
+		gInvestigate.SetActive( bCop );
+		
+	};
+};
+
+
+State EndCheck( )
+{
+	Conditions
+	{
+	};
+	Actions
+	{
+		gPickup.SetActive(true);
+		gPickup.SetVisible(true);
+		Text t("");
+		Number n(nFirstDetectiveSpotIndex);
+		Gizmo g("");
+		
+		While ( n < (nFirstDetectiveSpotIndex + nNumberOfFakeDetectiveSpots) )
+		{
+			if ( n == 0 )
+			{
+				g = ( tFakeDetect );
+			}
+			elseif ( n < 10 )
+			{
+				g = ( "" + tFakeDetect + n.ToText("int 1") );
+			}
+			elseif ( n < 100 )
+			{
+				g = ( "" + tFakeDetect + n.ToText("int 2") );			
+			}
+			elseif ( n < 1000 )
+			{
+				g = ( "" + tFakeDetect + n.ToText("int 3") );
+			}
+			elseif ( n < 10000 ) 
+			{
+				g = ( "" + tFakeDetect + n.ToText("int 4") );
+			};
+			
+			g.SetVisible(false);
+			g.SetActive(false);
+			n = n + 1;
+		};
+	};
+};
+
+Base();

@@ -1,0 +1,168 @@
+Area aLedge01("LedgeArea01");
+Area aLedge01B("LedgeArea01_B");
+Area aVerticleRun("VerticleRunArea");
+Area aVerticleRunB("VerticleRunAreaB");
+Area aHorizontalPole("HorizontalPoleArea");
+Area aHorizontalPoleB("HorizontalPoleAreaB");
+Area aWallVaults("WallVaultArea");
+Area aWallVaultsB("WallVaultAreaB");
+/*
+Area aLedge02("LedgeArea02");
+Area aLedge03("LedgeArea03");
+Area aHorizontalPole("HorizontalPoleArea");
+Area aVault("VaultArea");
+Area aVerticleRun("VerticleRunArea");
+Area aTemp("LedgeArea01");
+*/
+Number nWait(4);
+
+
+Character cPlayer1("player1");
+
+State AreaChecks( )
+{
+	Conditions
+	{
+		if ( aLedge01 ) 
+		{
+			if ( cPlayer1.InArea( aLedge01 ) )
+			{
+				goto Ledge01();
+			};
+		};		
+		
+		if ( aVerticleRun ) 
+		{
+			if ( cPlayer1.InArea( aVerticleRun ) )
+			{
+				goto VWallRun();
+			};
+		};
+		
+		if ( aHorizontalPole ) 
+		{
+			if ( cPlayer1.InArea( aHorizontalPole ) )
+			{
+				goto HorizontalPole();
+			};
+		};
+		
+		if ( aWallVaults )
+		{
+			if ( cPlayer1.InArea( aWallVaults ) )
+			{
+				goto WallVault();
+			};
+		};
+	};	
+	Actions
+	{
+	};
+};
+
+
+State Ledge01( )
+{
+	Conditions
+	{
+		if ( cPlayer1.InArea( aLedge01B ) ) 
+		{ 
+			PrintToScreen("Ledge Grab - Press A when on a ledge to jump to a ledge above");
+			aLedge01 = "";
+			goto AreaChecks(); 
+		};
+		
+		if ( !cPlayer1.InArea( aLedge01 ) ) 
+		{
+			goto AreaChecks(); 
+		};
+	};
+	Actions
+	{
+		PrintToScreen("Ledge Grab - Jump up to grab a ledge.");
+	};
+};
+
+
+State VWallRun( )
+{
+	Timer tWallRun(0);
+	Conditions
+	{
+		if ( !cPlayer1.InArea( aVerticleRun ) ) { goto AreaChecks(); };
+		
+		if ( tWallRun > 10 ) { goto VWallRun(); };
+		
+		if ( cPlayer1.InArea( aVerticleRunB ) )
+		{
+			aVerticleRun = "";
+			goto AreaChecks();
+		};
+	};
+	Actions
+	{
+		PrintToScreen("Vertical Wall Run - To wall run, Press A to jump just before the Wall Run prop.");
+	};
+};
+
+
+State HorizontalPole( )
+{
+	Timer t(0);
+	Number n(0);
+	Conditions
+	{
+		if ( !cPlayer1.InArea( aHorizontalPole ) ) { goto AreaChecks(); };
+		
+		if ( cPlayer1.InArea( aHorizontalPoleB ) )
+		{
+			if ( n == 1 ) 
+			{
+				PrintToScreen("Push the control stick left or right to begin spinning");
+				n = n + 1;
+				t = 0;
+			}
+			elseif ( n == 2  AND   t > 3 )
+			{
+				PrintToScreen("While spinning press A to jump to another pole");
+				n = n + 1;
+				t = 0;				
+			}
+			elseif ( n == 3 AND  t > 3 )
+			{
+				PrintToScreen("You can clear poles in quick succession");
+				aHorizontalPole = "";
+				goto AreaChecks();
+			};
+			
+		};
+	};
+	Actions
+	{
+		PrintToScreen("Horizontal Poles - press A to Jump up to a Horizontal pole.");
+		Wait( 0.5 );
+		n = 1;
+	};
+};
+
+
+State WallVault( )
+{
+	Conditions
+	{
+		if ( !cPlayer1.InArea( aWallVaults ) ) { goto AreaChecks(); };
+		
+		if ( cPlayer1.InArea( aWallVaultsB ) ) 
+		{
+			PrintToScreen("You can vault a fence by hitting jump just before you reach it.");
+			aWallVaults = "";
+			goto AreaChecks();
+		};
+	};
+	Actions
+	{
+		PrintToScreen("Vaults - Press A to jump just before a vault to clear it.");
+	};
+};
+
+AreaChecks();

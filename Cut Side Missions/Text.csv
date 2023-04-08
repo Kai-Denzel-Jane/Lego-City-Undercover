@@ -1,0 +1,52 @@
+Name,Description
+SC_RC_CAR_CHALLENGE,RC CAR CHALLENGE
+SC_RC_CAR_CHALLENGE_DESC,Complete 15 RC Challenges
+MISSION_TITLE_COMBINE_HARVEST,HECTIC HARVEST
+MISSION_INSTRUCTIONS_COMBINE_HARVEST,Drive through the field of corn with the combine and harvest the entire crop!
+MISSION_TITLE_FIRE,FIRE FIGHTERS
+MISSION_INSTRUCTIONS_FIRE,Put out all the Fires along the route
+MISSION_TITLE_PARAMEDIC,PARAMEDIC PANIC
+MISSION_INSTRUCTIONS_PARAMEDIC,Drive to each patient's location and provide first aid assistance!
+MISSION_TITLE_REPAIR,RAMPANT REPAIR
+MISSION_INSTRUCTIONS_REPAIR,Search for the broken street lights and repair them quickly!
+MISSION_TITLE_TAXI,FRANTIC FARES
+MISSION_INSTRUCTIONS_TAXI,Pickup 5 passengers and deliver them to their destinations
+MISSION_TITLE_TOWTRUCK,BREAKDOWN BONANZA
+MISSION_INSTRUCTIONS_TOWTRUCK,Drive the Tow Truck to customer locations and fix or tow their vehicles back to the garage.
+MISSION_TITLE_UFO,ALIEN ABDUCTION
+MISSION_INSTRUCTIONS_UFO,Use the UFO to abduct and corral the livestock! Press A to start
+LEGO_BONUS_MISSION_INFO,You may need to progress through story to access these special missions.
+LEGO_BONUS_MISSION_UNLOCKED,Bonus Missions!
+UNLOCK_SPECIALMISSIONS,You've unlocked the special missions. You must complete Chapter 4 to be able to play these.
+MISSION_COMBINE_HARVESTER_BAR_NAME,Corn Remaining
+MISSION_COMBINE_HARVESTER_START,Start Harvesting!
+MISSION_FIRE01_CONVO_01,"Hop on in, it's FireFighting time!"
+MISSION_FIRE01_CONVO_02,We have a Fire at the Burger Place!
+MISSION_FIRE01_CONVO_03,The Courthouse is on Fire!
+MISSION_FIRE01_CONVO_04,Headquarters say that this is the last one.
+MISSION_FIRE01_CONVO_05,I'm going to take the truck back to the station. Good work!
+MISSION_FIRE01_PROMPT,You must be a Fireman to accept this mission
+MISSION_PARAMEDIC_ABANDONED,The ambulance has been abandoned.
+MISSION_PARAMEDIC_ABANDONED_PATIENT,The patient has been abandoned.
+MISSION_PARAMEDIC_CHARACTER_PROMPT,The Paramedic character is required to start this mission.
+MISSION_REPAIR_RETURN_TO_VEHICLE,Return to the repair truck.
+MISSION_REPAIR_STAGEINSTR,RADIO: Follow the SatNav to the next broken streetlight and fix it
+MISSION_TAXI_ABANDONED,The Taxi Cab has been abandoned.
+MISSION_TAXI_CHARACTER_PROMPT,The Taxi Driver character is required to start this mission.
+MISSION_TAXI_PROMPT,Studs awarded based on time
+MISSION_TAXI_RETURN_TO_CAB,Return to the Taxi Cab.
+MISSION_TAXI_STUDRING_PROMPT,Studs awarded by passing through stud gates within time
+MISSION_TAXI_STUDTRAIL_PROMPT,Studs awarded for collecting trail of studs within time
+MISSION_PARAMEDIC_PATIENT_01,RADIO: Patient injured at the end of Lombard Street
+MISSION_PARAMEDIC_PATIENT_02,"RADIO: Help needed at the Gleeson Mansion, top of Lombard Street"
+MISSION_PARAMEDIC_PATIENT_03,RADIO: Emergency call from the corner of Racine Road and Russian Hill
+MISSION_PARAMEDIC_PATIENT_04,RADIO: Patient waiting opposite the police station.
+MISSION_PARAMEDIC_PATIENT_05,RADIO: Emergency call from in front of Yellowbrick Railroad Station
+MISSION_TAXI_DIRECTIONS_PICKUP_01,RADIO: Customer waiting on Racine Road.
+MISSION_TAXI_DIRECTIONS_PICKUP_02,RADIO: Customer waiting in the Town Hall carpark.
+MISSION_TAXI_DIRECTIONS_PICKUP_03,RADIO: Customer waiting outside their house behind the Town Hall.
+MISSION_TAXI_DIRECTIONS_PICKUP_04,RADIO: Customer waiting NEED NAME
+MISSION_TAXI_DIRECTIONS_PICKUP_05,RADIO: Customer waiting NEED NAME
+MISSION_TOWRUCK_DIRECTIONS_DROPOFF_02,"PHONE: Great, you found it. Tow the car to the Police Station where it'll be impounded."
+MISSION_TOWTRUCK_DIRECTIONS_PICKUP_01,PHONE: Drive to the Butternut Mansion on Lombard Street and fix their car.
+MISSION_TOWTRUCK_DIRECTIONS_PICKUP_02,PHONE: Follow your SatNav and tow the vehicle waiting for you.

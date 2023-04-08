@@ -1,0 +1,1 @@
+ConnectTeleports "From=Teleport_Pad_SA" "ComplexGizmoFrom=iTeleport_Pad_CMPLX" "To=Teleport_Pad_SA" "ComplexGizmoTo=iTeleport_Pad_CMPLX1" "BothWays

@@ -1,0 +1,4 @@
+level	; Detective spot for draws setup
+level1	; Detective spot for cupboard 
+level2	; Detective spot for dog
+level3	; Detective spot for trapdoor

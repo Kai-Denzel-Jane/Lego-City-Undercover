@@ -1,0 +1,41 @@
+
+State Base( )
+{
+	Gizmo gWireTap_01("iWIRE_TAP_CMPLX");
+	
+	Bool bMap(false);
+	Bool bWireTap_01(true);
+	Timer timeMap(0);
+	Conditions
+	{
+		if ( gWireTap_01.GetOutput( 1 )  AND  bWireTap_01 )
+		{
+			UI_SetMissionHelpText("WIRETAP_LEGOCITY_SF_RESIDENTIAL_01");
+			// SockSetEnabled ( "30", true );
+			bWireTap_01 = false;
+		}
+		elseif ( gWireTap_01.GetOutput( 0 )  AND  !bWireTap_01 )
+		{
+			UI_RemoveMissionHelpText();
+			UI_ShowMapUnlock(true);
+			// SockSetEnabled ( "30", false );
+			bWireTap_01 = true;
+			bMap = true;
+			timeMap = 0;
+		};
+		
+		
+		if ( bMap  AND  timeMap > 3 )
+		{
+			bMap = false;
+			UI_ShowMapUnlock(false);
+		};
+	};
+	Actions
+	{
+	};
+};
+
+
+
+Base();

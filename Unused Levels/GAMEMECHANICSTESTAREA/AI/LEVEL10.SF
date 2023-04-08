@@ -1,0 +1,115 @@
+Text tCatSwitch("iCATCH_CAT");
+Text tCatSpawnLocator("POI_01");;
+Text tDataNode;
+
+Character cPlayer1("player1");
+Character cPlayer2("player2");
+Character cCat;
+
+State AwaitCatSwitch()
+{
+	Gizmo gCatSwitch(tCatSwitch);
+	Conditions
+	{
+		if ( gCatSwitch )
+		{
+			if ( gCatSwitch.GetOutput(2) )
+			{
+				goto SetComplete();
+			};
+		}
+	};
+	Actions
+	{
+		Locator lSpawn(tCatSpawnLocator);
+		Number nDirection;
+		if ( lSpawn )	{	nDirection = lSpawn.GetDirection();	}
+		cCat = CreateAICharacter("Cat", "Creature", lSpawn, nDirection);
+		cCat.SetInvulnerable(true);
+		cCat.SetPushable(false);
+		cCat.MakeSimpleCharacter(true);
+	};
+};
+
+
+State SetComplete( )
+{
+	Gizmo gCatSwitch(tCatSwitch);
+	Actions
+	{
+		
+		Character cWinner;
+		Character cPlayer1("player1");
+		Character cPlayer2("player1");
+		
+		Number nAnim;
+		Number nTotal;
+		Number nMax;
+		
+		gCatSwitch.SetVisible(false);
+		gCatSwitch.SetActive(false);
+		
+		if ( cPlayer2.IsOn() )
+		{
+			if ( gCatSwitch )
+			{
+				if ( cPlayer1.DistanceTo( gCatSwitch ) <= cPlayer2.DistanceTo( gCatSwitch ) )
+				{
+					cWinner = cPlayer1;
+				}
+				else
+				{
+					cWinner = cPlayer2;
+				};
+			}
+			else
+			{
+				cWinner = cPlayer1;
+			};
+		}
+		else
+		{
+			cWinner = cPlayer1;
+		};
+		
+		
+		if ( cWinner )
+		{
+			if ( !cWinner.GetVehicle() )
+			{
+				Text tChangeAnim("Celebration"); // Animation which plays when an unlock occurs				
+				cWinner.SetAiOverride(true);
+				cWinner.Stop();
+				Wait();
+				
+				cWinner.FaceCamera();
+				Wait();
+				
+				nAnim = cWinner.PlayContextAnimation(tChangeAnim,1);
+				nAnim = nAnim / 2;				
+				Wait(nAnim);
+			};	
+		};	
+		
+		
+		if ( cWinner )	{	Wait(nAnim); 	};
+		if ( cWinner )	{	cWinner.SetAiOverride(false); 	};
+
+		goto JobStop();
+	};
+};
+
+/////////////////////////////////////////////////////////////////////////////////
+//  CLEANUP STAGE
+/////////////////////////////////////////////////////////////////////////////////
+
+State JobStop()
+{
+	Actions
+	{
+		if ( cCat )	{	cCat.Kill();	};
+	};
+};
+
+AwaitCatSwitch();
+AwaitCatSwitch();

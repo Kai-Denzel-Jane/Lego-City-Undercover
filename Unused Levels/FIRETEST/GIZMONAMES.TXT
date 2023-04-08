@@ -1,0 +1,7 @@
+GizObstacle		iRainbow_Brick_Dummy
+GizObstacle		iDynamite_Vending_Crane
+Techno		techno
+Techno		techno1
+Message		msg_FreePlay		CanBeInstanced
+Message		msg_Player2Active		CanBeInstanced
+Message		msg_ChallengeMode		CanBeInstanced

@@ -1,0 +1,819 @@
+// NOTE: this script currently only handles 2 stages, one where the player drives to a spellit and constructs it, the other where the player drives to a car and tows it.
+// However, it is setup to be easily scaled to allow for multiple iterations of these stages. Simply increase the nMaxStage value and add to the checks in HeadToPickup()
+// against nStage if you have additional Spellits - ensure you maintain the naming convention for all locators, areas and spellits.
+ 
+HotSpot hMissionStart("");
+ 
+Timer scripttimer(0);
+Timer missionTimer(0);
+
+Number nStage(1);
+Number nMaxStage(2); 		// Number of passengers / loops of pickups
+Number nMaxTime(600);		// Seconds allowed for the mission to be completed within
+Number nMaxDistance(8); 	// Max distance allowed from patient is 8 units
+Number nAbandonTime(15); 	// Abandon time of 15 seconds
+Number nPhaseType(0);  		// 0 is a repair phase and 1 is a tow phase
+
+Number nHeroMax(5000);
+Number nRepairStuds(2500);
+Number nTowStuds(2500);
+
+Character cPlayer1("player1");
+Character cPlayer2("player2");
+Character cMissionPlayer("");
+Character cTruck("");
+Character cPickup("");
+Character cCustomer("");
+Character cTempA("");
+Character cTempB("");
+
+Locator lTruckSpawn( "" ); 
+
+Global Bool bBuilt(false);
+
+WorldLevel wlCity ("Lego_City");
+
+WorldLevel wlMissionStart("SF_Residential_0921");		// Tile the mission vehicle starts on
+WorldLevel wlTowMission01("SF_Residential_0819");		// Stage 1's assets exist in this tile
+WorldLevel wlTowMission02("SF_Residential_1020");		// Stage 2's assets exist in this tile
+WorldLevel wlCurrentMission("SF_Residential_0819");
+
+
+
+/////////////////////////////////////////////////////////////////
+// Level Load
+/////////////////////////////////////////////////////////////////
+
+Bool bTemp(true);  // Horrible nasty bool check for giving UI elements for the first time, so that the state can be entered and exited to respawn characters as they fall through the world
+
+Function LevelEnter (WorldLevel level)
+{
+	
+	if (!cPlayer1)
+	{
+		cPlayer1 = "player1";
+	};
+};
+
+/////////////////////////////////////////////////////////////////////////////////
+////  SETUP STAGE
+/////////////////////////////////////////////////////////////////////////////////
+
+
+State Setup()
+{
+	Conditions
+	{
+		if ( wlCity.IsLoaded() )
+		{
+			goto EnableHotspot();
+		};
+	};	
+	Actions
+	{
+	};
+};
+
+
+state EnableHotspot()
+{
+	Conditions
+	{
+	};
+	
+	Actions
+	{
+		hMissionStart = "BM_Tow_SFR_01_Start";
+		
+		lTruckSpawn = "BM_Tow_SFR_01_SpawnTowTruck"; 
+
+		
+		// setup stuff...
+		// [NOTE: stuff done here must be un-done in Cleanup()]
+		hMissionStart.SetActive(true);
+		hMissionStart.NoCondition();
+		hMissionStart.SetHaloVisible(false);
+		hMissionStart.SetIcon("Bonus"); 
+		goto WaitForReturnToTile();
+	};
+};
+
+
+// Wait for the player to be in the tile
+State WaitForReturnToTile()
+{
+	Conditions
+	{
+		if( wlMissionStart.IsLoaded() ) 
+		{ 
+			
+			if ( cTruck ) 
+			{ 
+				if ( cPlayer1.InVehicle() != cTruck )
+				{
+					cTruck.Kill();
+				};
+			};
+			goto WaitForPlayerInTruck(); 
+		};
+	};
+	Actions
+	{
+	};	
+};
+
+
+// Activate, then await the player to enter the truck.
+State WaitForPlayerInTruck()
+{
+	
+	Conditions
+	{
+			
+//		 Check to see if the player enters the mission's vehicle 
+		
+		if ( wlCity.IsLoaded() )
+		{
+			if ( cTruck )
+			{
+				if ( cPlayer1 )
+				{
+					if( cPlayer1.InVehicle() == cTruck )
+					{
+						if (MissionFocus(cPlayer1))
+						{
+							cMissionPlayer = cPlayer1;
+							goto GiveMissionPrompts();
+						};
+					};
+				}
+				else
+				{
+					cPlayer1 = "player1";
+				};
+				
+				if ( cPlayer2 )
+				{				
+					if( cPlayer2.InVehicle() == cTruck )
+					{
+						if (MissionFocus(cPlayer2))
+						{
+							cMissionPlayer = cPlayer2;
+							goto GiveMissionPrompts();
+						};
+					};
+				}
+				else
+				{
+					cPlayer2 = "player2";
+				};
+				
+			};
+			
+			if(  !wlMissionStart.IsLoaded()  ) 
+			{ 
+				if ( cTruck ) 
+				{
+					cTruck.Kill();
+					cTruck = "";
+				};
+				goto WaitForReturnToTile(); 
+			};	
+		};		
+	};
+	Actions
+	
+	{
+		UI_LoadMissionPrompt("Hud_Mission_Bonus_Tow");
+		
+		if ( !cTruck )
+		{
+			Number nDirection(0);
+			nDirection = lTruckSpawn.GetDirection();
+			cTruck = CreateCharacter( "industrial_towtruck", lTruckSpawn, "default", nDirection );
+			wait(0);
+			cTruck.SetParked(true);		
+		};
+	};
+};
+
+// Checks to see if the player starts the mission or not - handles accepting the mission
+State GiveMissionPrompts()
+{
+	Number n(0);
+	
+	Conditions
+	{
+//		 Gets out of the vehicle before pressing LB to initiate mission...
+		if( cMissionPlayer.InVehicle() != cTruck  ) 
+		{ 
+			cTruck.SetParked(false);
+			UI_HideMissionPrompt();
+			MissionUnfocus();
+			goto WaitForPlayerInTruck(); 
+		};
+
+		if( PlayerPressedButton(cMissionPlayer, "A") ) 
+		{ 
+			MissionActivate();  // START THE MISSION!				
+		};
+
+			
+		// Remove vehicles and characters from previous iterations of the mission if they exist
+		if ( cTempA ) 
+		{
+			if ( !cTempA.OnScreen() )
+			{
+				cTempA.Deactivate();
+				cTempA = "";
+			};			
+		};
+		
+		if ( cTempB ) 
+		{
+			if ( !cTempB.OnScreen() )
+			{
+				cTempB.Deactivate();
+				cTempB = "";
+			};			
+		};		
+	};
+	Actions
+	{
+		UI_ShowMissionPrompt("Hud_Mission_Bonus_Tow", "MISSION_INSTRUCTIONS_TOWTRUCK", "MISSION_PROMPT", "MISSION_TITLE_TOWTRUCK");	
+	};
+};
+
+
+
+
+/////////////////////////////////////////////////////////////////////////////////
+///// CLEANUP
+/////////////////////////////////////////////////////////////////////////////////
+
+
+state Cleanup()
+{
+	Actions
+	{
+		// cleanup stuff...	
+
+		if ( cTruck )
+		{
+			cTruck.Release();
+			cTruck = "";
+		};
+		
+		if ( cPickup )
+		{
+			cPickup.Release();
+			cPickup = "";
+		};
+		
+		if ( cCustomer )
+		{
+			cCustomer.Release();
+			cCustomer = "";
+		};
+		
+		if ( cTempA )
+		{
+			cTempA.Release();
+			cTempA = "";
+		};
+		
+		if ( cTempB )
+		{
+			cTempB.Release();
+			cTempB = "";
+		};
+		
+		if ( hMissionStart )
+		{
+			hMissionStart.SetActive(false);
+		};
+		
+		if ( wlCity.IsLoaded() )
+		{
+			Number n(1);
+			Gizmo gBuildit("iSaloon_Alom_Buildit" + n.ToText("int 2"));
+			gBuildit.SetActive(false);
+			// gBuildit.SetVisible(false);
+		};
+		
+		StreamedCharacterReleaseAll();
+		// All tidy, let the game know...
+		MissionCleanupEnd();
+	};
+};
+
+
+/////////////////////////////////////////////////////////////////////////////////
+//// Mission Loop
+/////////////////////////////////////////////////////////////////////////////////
+
+
+state Begin()
+{
+	Actions
+	{
+		UI_StartMission();
+		hMissionStart.Trigger();
+		cTruck.SetParked(false);
+		missionTimer = 0;
+		UI_SetHUDTimer( nMaxTime, 1, missionTimer );
+		UI_ShowHUDTimer(true);	
+		StreamedCharacterPreLoad("businessman");
+		StreamedCharacterPreLoad("SaloonCars_Cetan");
+		StreamedCharacterPreLoad("SaloonCars_Alom");
+		goto IntialiseStage();	
+	};
+};
+
+
+// Set the tow type (head to the correct state loop) and give the UI prompt and set the satnav & hotspots up
+
+State IntialiseStage()
+{
+	Locator lCustomerSpawn("BM_Tow_SFR_01_PIP" + nStage.ToText("int 2"));
+	Locator lSatNav( "BM_Tow_SFR_01_PIP" + nStage.ToText("int 2") );
+	HotSpot hPickup( "BM_Tow_SFR_01_HS" + nStage.ToText("int 2") );
+	Conditions
+	{	
+	};
+	Actions
+	{
+		// Set the current stage's tile, to check against being loaded 
+		
+		if ( nStage == 1 )
+		{
+			wlCurrentMission = wlTowMission01;
+		}
+		elseif (nStage == 2)
+		{
+			wlCurrentMission = wlTowMission02;
+		};	
+
+
+		
+		// Give UI instructions
+		Text t("MISSION_TOWTRUCK_DIRECTIONS_PICKUP_");
+		t = t + nStage.ToText("int 2");
+
+		UI_SetHeroBarMax(nHeroMax);
+		UI_PhoneCall( true, 6.25 );
+		Wait(0.25);
+		UI_SetMissionHelpText( t, 5 );
+		Wait(1.5);
+		UI_ShowMissionCounter( false );	
+		
+		
+		// Enable hotspot and satnav
+		hPickup.SetActive(true);
+		hPickup.NoCondition();
+		hPickup.SetIcon("Story");
+		SetSatNavDestination( lSatNav );
+		
+		
+		// Choose which tow type to use (i.e. which state loop to enter) for this stage
+		if ( nPhaseType == 0 )
+		{
+			lCustomerSpawn = ( "BM_Tow_SFR_01_NPC" + nStage.ToText("int 2") );
+			cCustomer = CreateAICharacter( "businessman", "Pedestrian", lCustomerSpawn );
+			goto HandleBuilderCar();
+		}
+		else
+		{
+			goto HeadToPickup();
+		};
+	};
+};
+
+
+/////////////////////////////////////////////////////////////////////////////////
+//// Towing Phase
+/////////////////////////////////////////////////////////////////////////////////
+
+// Handle the start of heading to the next vehicle to tow or spellit to build
+
+State HeadToPickup()
+{
+	Locator lCustomerSpawn("BM_Tow_SFR_01_PIP" + nStage.ToText("int 2"));
+	Locator lTowSpawnTarget("BM_Tow_SFR_01_PIP" + nStage.ToText("int 2"));
+	HotSpot hPickup( "BM_Tow_SFR_01_HS" + nStage.ToText("int 2") );
+
+	Conditions
+	{
+		if ( cPickup )
+		{
+			if ( cTruck.IsTowing( cPickup ) ) 
+			{ 
+				hPickup.Trigger();
+				goto HeadToDropOff(); 
+			};
+			if ( cPlayer1.InVehicle() == cPickup  OR cPlayer2.InVehicle() == cPickup )
+			{
+				cPickup.SetParked(true);
+			};
+		};
+		// if ( cMissionPlayer.InVehicle() != cTruck  ) { goto ReturnToVehicle(); };
+
+		if ( missionTimer > nMaxTime ) { goto OutOfTime(); };
+
+		if ( wlCurrentMission.IsLoaded()  AND  !cPickup  AND  nStage != 1 )
+		{
+			goto RespawnPickup();
+		};
+	};
+	Actions
+	{
+	};
+};
+
+State RespawnPickup( )
+{
+	Conditions
+	{
+		if  ( cPickup ) 
+		{
+			goto HeadToPickup();
+		};
+	};
+	Actions
+	{
+		Locator lTowSpawnTarget( "BM_Tow_SFR_01_TARGET" + nStage.ToText("int 2") );
+		cPickup = CreateCharacter( "SaloonCars_Cetan", lTowSpawnTarget, "default" );
+	};
+};
+
+
+// Handle drop off checks for vehicles being towed
+State HeadToDropOff( )
+{
+	Locator lSatNav( "BM_Tow_SFR_01_DOP" + nStage.ToText("int 2") );
+	Area 	aHotSpot( "BM_Tow_SFR_01_DP" + nStage.ToText("int 2") );
+	HotSpot hDropOff( "BM_Tow_SFR_01_DP" + nStage.ToText("int 2") );
+	Conditions
+	{
+		if ( cPickup.InArea( aHotSpot )  AND  !cTruck.IsTowing( cPickup ) )
+		{
+			Playergivestuds(nTowStuds);
+			hDropOff.Trigger();
+			cPickup.SetParked(false);			
+			goto CheckStage();
+		};
+
+		if ( cPlayer1.InVehicle() == cPickup  OR cPlayer2.InVehicle() == cPickup )
+		{
+			cPickup.SetParked(true);
+		};		
+		
+		if ( missionTimer > nMaxTime ) { goto OutOfTime(); };
+	};
+	Actions
+	{	
+		hDropOff.NoCondition();
+		hDropOff.SetActive(true);
+		hDropOff.SetIcon("Story");
+		SetSatNavDestination( lSatNav );
+		
+		Text t("MISSION_TOWRUCK_DIRECTIONS_DROPOFF_");
+		t = t + nStage.ToText("int 2");
+
+		UI_PhoneCall( true );
+		Wait(0.25);
+		UI_SetMissionHelpText( t, 5 );
+		Wait( 5.5 );
+		UI_PhoneCall( false );		
+	};
+};
+
+
+
+/////////////////////////////////////////////////////////////////////////////////
+//// Buildit Phase
+/////////////////////////////////////////////////////////////////////////////////
+
+// If there's a spellit involved in this stage of the mission, watch for its completion
+State HandleBuilderCar(  )
+{
+	Gizmo gBuildit("iSaloon_Alom_Buildit" + nStage.ToText("int 2"));
+	Bool bGizmo(true);
+	HotSpot hPickup( "BM_Tow_SFR_01_HS" + nStage.ToText("int 2") );
+	
+	Conditions
+	{
+		if ( gBuildit.HasFinished() )  // OR  _Message("msg_Level.nyut_ttrepaired") == 1.0  ) 
+		{
+			gBuildit.SetVisible( false );	
+			gBuildit.SetActive( false );
+			hPickup.Trigger();			
+			goto SpawnBuiltCar();
+		};
+		
+		// if ( cMissionPlayer.InVehicle() != cTruck  AND  cMissionPlayer.DistanceToXZ( gBuildit ) > nMaxDistance ) { goto ReturnToVehicleOrSpellit(); };
+		
+		if ( missionTimer > nMaxTime ) { goto OutOfTime(); };
+	
+		if (  wlCurrentMission.IsLoaded()  AND  !cCustomer )
+		{
+			  goto RespawnDriver();
+		};
+		
+		if ( bGizmo )
+		{
+			if (  wlCurrentMission.IsLoaded() )
+			{
+				bGizmo = false;
+				gBuildit.SetActive(false);
+				gBuildit.SetActive(true);
+			};
+		}
+		else
+		{
+			if (  !wlCurrentMission.IsLoaded() )
+			{
+				bGizmo = true;
+			};
+		};
+	
+	};
+	Actions
+	{
+	};
+};
+
+State RespawnDriver( )
+{
+	Gizmo gBuildit("iSaloon_Alom_Buildit" + nStage.ToText("int 2"));
+	Conditions
+	{
+		if ( cCustomer ) 
+		{
+			goto HandleBuilderCar();
+		};
+	};
+	Actions
+	{
+		Locator lCustomerSpawn( "BM_Tow_SFR_01_NPC" + nStage.ToText("int 2") );
+		gBuildit.SetActive(false);
+		gBuildit.SetActive(true);
+		cCustomer = CreateAICharacter( "businessman", "Pedestrian", lCustomerSpawn );
+	};
+};
+
+
+
+// Spawn the built car, tell the customer NPC to jump in and drive off, then increment nStage 
+State SpawnBuiltCar( )
+{
+	Gizmo gBuildit("iSaloon_Alom_Buildit" + nStage.ToText("int 2"));
+	Number n(1);
+	Conditions
+	{	
+		if ( cCustomer  AND  cPickup )
+		{
+			cCustomer.TakeOver( cPickup );
+			cPickup.Release();
+			cCustomer.Release();
+			cPickup = "";
+			cCustomer = "";
+			Playergivestuds(nRepairStuds);
+			goto CheckStage();	
+		};
+	};
+	Actions
+	{
+		n =  gBuildit.GetDirection();
+		cPickup = CreateCharacter( "SaloonCars_Alom", gBuildit, "default", n);
+		Wait(0.5);				
+	};
+};
+
+
+/////////////////////////////////////////////////////////////////////////////////
+//// Stage End logic
+/////////////////////////////////////////////////////////////////////////////////
+
+// Check whether to move to the next stage or complete the mission
+State CheckStage( )
+{
+	Conditions
+	{
+	};
+	Actions
+	{		
+		bTemp = true;
+		nStage = nStage + 1;
+
+		UI_SetMissionCounter ( (nStage - 1), nMaxStage, false ) ;
+		UI_ShowMissionCounter( true );
+		
+		if (nPhaseType == 0)
+		{
+			nPhaseType = 1;
+		}
+		else
+		{
+			nPhaseType = 0;
+		};
+		
+		if ( nStage > nMaxStage ) 
+		{ 
+			goto MissionEnd(); 
+		}
+		else 
+		{ 
+			if (nStage == 2)
+			{
+				wlCurrentMission = wlTowMission02;
+				goto IntialiseStage();
+			};
+		};
+	};
+};
+
+
+/////////////////////////////////////////////////////////////////////////////////
+//// Return to Vehicle states
+/////////////////////////////////////////////////////////////////////////////////
+
+
+// If the player remains out of the vehicle and moves far enough away from the spellit, or enters another vehicle, abandon the mission
+State ReturnToVehicleOrSpellit( ) 
+{
+	Gizmo gBuildit("iSaloon_Alom_Buildit" + nStage.ToText("int 2") );
+	Timer abandonTimer(0);
+	
+	Conditions
+	{
+		if ( ( cMissionPlayer.InVehicle() AND cMissionPlayer.InVehicle() != cTruck )  OR  abandonTimer > nAbandonTime ) 
+		{ 
+			UI_RemoveMissionMessage();
+			goto AbandonMission(); 
+		};
+	
+		if ( cMissionPlayer.DistanceToXZ( gBuildit ) <= nMaxDistance  OR  cMissionPlayer.InVehicle() == cTruck ) 
+		{ 
+			UI_RemoveMissionMessage();
+			goto HandleBuilderCar(); 
+		};
+		
+	};
+	Actions
+	{
+		UI_SetMissionMessage("MISSION_GENERIC_RETURN_TO_MISSION");
+	};
+};
+
+
+// Prompt the player to return to their vehicle after they complete each spellit
+State ReturnToVehicle( )
+{
+	Area 	aHotSpot( "SFRD_TowTruckArea_PIP" + nStage.ToText("int 2") );
+	Timer abandonTimer(0);
+	Conditions
+	{
+		if ( cMissionPlayer.InVehicle() == cTruck ) 
+		{ 
+			if ( cPickup.InArea( aHotSpot ) )
+			{
+				UI_RemoveMissionMessage();
+				goto HeadToPickup(); 
+			}
+			else
+			{
+				UI_RemoveMissionMessage();
+				goto HeadToDropOff();
+			};
+			
+		};
+		
+		if ( abandonTimer > nAbandonTime ) 
+		{ 
+			UI_RemoveMissionMessage();
+			goto AbandonMission(); 
+		};
+	};
+	Actions
+	{	
+		UI_SetMissionMessage("MISSION_GENERIC_RETURN_TO_MISSION");
+	};
+};
+
+
+/////////////////////////////////////////////////////////////////////////////////
+//// End or complete mission states
+/////////////////////////////////////////////////////////////////////////////////
+
+// Mission ends due to player running out of time - Give out of time message and reset mission
+State OutOfTime( ) 
+{
+	Conditions
+	{
+		
+	};
+	Actions
+	{
+		UI_EndMission("MISSION_FAIL_TIMEOUT", false);		
+		goto HandleFailScreen();
+	};
+};
+
+
+State AbandonMission( )
+{
+	Conditions
+	{
+	};
+	Actions
+	{
+		UI_EndMission("MISSION_GENERIC_ABANDONED", false);
+		goto HandleFailScreen();
+	};
+};
+
+
+
+State HandleFailScreen( )
+{
+	Timer time(0);
+	Bool b(false);
+	Conditions
+	{
+		if ( time > 0.1  AND  ( PlayerPressedButton(cMissionPlayer, "A")  OR  PlayerPressedButton("Y") ) AND !b )
+		{
+			UI_ResetMission();
+			goto Reset();
+		}
+		else
+		{
+			if ( (b AND !cMissionPlayer.InVehicle()) OR  PlayerPressedButton(cMissionPlayer, "A")  OR  PlayerPressedButton("Y") )
+			{
+				UI_ResetMission();
+				goto Reset();
+			};
+		};
+		
+	};
+	Actions
+	{
+		if ( cMissionPlayer.InVehicle() ) 
+		{
+			b = true;
+		};	
+	};
+};
+
+
+
+
+
+// Give the mission complete message
+State MissionEnd( )
+{
+	Actions
+	{
+		UI_ShowMissionCounter( false );
+		goto Reset();
+	};
+};
+
+
+
+// Reset the mission so it can be started again
+State Reset( )
+{
+	Conditions
+	{
+		
+	};
+	Actions
+	{
+		UI_SetStatsStuds();	
+		SetSatNavDestination();
+		SetHotSpot();		
+		if ( cTruck )
+		{
+			// cTruck.SetScript( "default" );
+			cTruck = "";
+		};
+		
+		Number n(1);
+		Gizmo gBuildit("iSaloon_Alom_Buildit" + n.ToText("int 2"));
+		gBuildit.SetVisible( false );	
+		gBuildit.SetActive( false );
+		StreamedCharacterReleaseAll();
+		UI_StopHUDTimer();
+		UI_ShowHUDTimer( false );	
+		
+		if ( nStage > nMaxStage ) 
+		{ 	
+			MissionComplete(); // NEEDS TO CHECK AGAINST MISSION COMPLETE STATUS AND FAIL / END MISSION IF MISSION FAILED / ABANDONED ONCE THAT STATE IS AVAILABLE
+		}
+		else
+		{
+			MissionAbort();
+		};		
+	};
+};

@@ -1,0 +1,871 @@
+// This script is the Taxi Mission Handler - when you jump into a Taxi (at the moment a
+// specific one, later on it should be any of them) it will spawn the first customer. That
+// customer will then further the mission by getting picked up and dropped off.
+// If the player gets out of the taxi they have 5 seconds to get back in it before the 
+// script will abort, and any customer who is in the taxi will get out.
+// We execute this ONCE only. Couples the Taxi up and then heads to WaitForTaxiMission
+
+HotSpot hMissionStart("");
+// Mission vehicle spawn locations
+Locator lTaxiSpawn("");
+
+// Characters used in the mission
+Character cPlayer1("player1");
+Character cPlayer2("player2");
+Character cMissionPlayer("");
+Vehicle cTaxi("");
+Character cPassengerCurrent("");
+
+Global Locator gLocMoveTo("");
+
+// Vehicle setup strings
+Text tVehicleType("Taxicab");
+Text tCharType("");
+
+// Declaration strings - used to declare area and locator vars in the mission loop as the mission stage progresses / iterates
+Text tSpawnLocator("BM_Taxi_SFR_01_Customer");
+//Text tPickupArea("TaxiMissionCustomerPickupArea"); // CANNOT SEE AREAS RELATING TO THESE IN THE LED. REMOVE IS UNNECESSARY
+Text tPickupLocator("BM_Taxi_SFR_01_PU");
+//Text tDropOffArea("TaxiMissionCustomerDropOffArea"); // CANNOT SEE AREAS RELATING TO THESE IN THE LED. REMOVE IS UNNECESSARY
+Text tDropOffLocator("BM_Taxi_SFR_01_DO");
+
+Text tPickupHotspot("HotSpot_SideMission_Taxi_Pickup_SFResidentialRings_");
+Text tDropOffHotspot("HotSpot_SideMission_Taxi_DropOff_SFResidentialRings_");
+Text tRing("BM_Taxi_SFR_01_Ring");
+Text tCurrentRing("");
+
+// Response text based on player performance
+Text tGood_01("MISSION_TAXI_CUSTOMER_RESPONSE_GOOD_01");
+Text tNeutral_01("MISSION_TAXI_CUSTOMER_RESPONSE_FAIR_01");
+Text tPoor_01("MISSION_TAXI_CUSTOMER_RESPONSE_POOR_01");
+
+// Temporary text to differentiate between different taxi varients
+Text tPrompt("MISSION_TAXI_STUDRING_PROMPT");
+
+Number nStage(1);
+Number nMaxStage(2); // Number of passengers / loops of pickups
+Number nTimeLimit(600); // Seconds allowed for the mission to be completed within
+
+// Definitions needed for new timer system and two tier stud awards
+Number nStage01Timer(50);
+Number nStage02Timer(70);
+Number nStage03Timer(70);
+Number nStage04Timer(70);
+Number nStage05Timer(70);
+
+Number nBonusThreshold(0);
+Number nTimeMultiplier(500);
+Number nTimeBonusMultiplier(1000);
+Number nStudAward(0);
+Number nHeroTarget(25000);
+Number nPassengerSet(0);
+
+Number nCust01PickupRings(6);
+Number nCust01DropoffRings(12);
+Number nCust02PickupRings(18);
+Number nCust02DropoffRings(26);
+
+Number nAbortDistance(5);
+
+Timer scripttimer(0);
+Timer missionTimer(0);
+
+WorldLevel wlCity ("Lego_City");
+WorldLevel wlMissionStart("SF_Residential_1122");
+WorldLevel wlPassenger1("SF_Residential_0921");
+WorldLevel wlPassenger2("SF_Residential_0919");
+WorldLevel wlPassenger3("SF_Residential_0919");
+WorldLevel wlPassenger4("SF_Residential_0919");
+WorldLevel wlPassenger5("SF_Residential_0919");
+
+WorldLevel wlCurrentPassenger("SF_Residential_0921");
+
+
+
+/////////////////////////////////////////////////////////////////
+// Level Load
+/////////////////////////////////////////////////////////////////
+Function LevelEnter (WorldLevel level)
+{
+	
+	if ( level == wlCity )
+	{
+		if (!cPlayer1)
+		{
+			cPlayer1 = "player1";
+		};
+	};
+};
+
+/////////////////////////////////////////////////////////////////////////////////
+////  SETUP STAGE
+/////////////////////////////////////////////////////////////////////////////////
+
+State Setup()
+{
+	Conditions
+	{
+		if ( wlCity.IsLoaded() )
+		{
+			goto EnableHotspot();
+		};
+	};	
+	Actions
+	{
+	};
+};
+
+
+State EnableHotspot()
+{
+	Conditions
+	{
+	};
+	
+	Actions
+	{
+		hMissionStart = "BM_Taxi_SFR_01_StudRingStart";
+
+		lTaxiSpawn = "BM_Taxi_SFR_01_StudRingSpawn";
+		
+		// setup stuff...
+		// [NOTE: stuff done here must be un-done in Cleanup()]
+		
+		hMissionStart.SetHaloVisible(false);
+		hMissionStart.SetIcon("Bonus"); 
+		hMissionStart.SetActive(true);
+		hMissionStart.NoCondition();
+		goto WaitForReturnToTile();
+	};
+};
+
+
+
+
+// Wait for the player to be in the tile
+State WaitForReturnToTile()
+{
+	Conditions
+	{
+		if( wlMissionStart.IsLoaded() ) 
+		{ 
+			goto WaitForPlayerInTaxi(); 
+		};
+	};
+	Actions
+	{
+		if ( cTaxi ) 
+		{ 
+			if ( cPlayer1.GetVehicle() != cTaxi  AND  cPlayer2.GetVehicle() != cTaxi ) 
+			{	
+				cTaxi.Deactivate();
+				cTaxi = "";					
+			};
+		};
+	};	
+};
+
+
+// Activate, then await the player to enter the taxi.
+State WaitForPlayerInTaxi()
+{
+
+Number n(0);
+	
+	Conditions
+	{
+//		 Check to see if the player enters the mission's vehicle		
+		if ( wlCity.IsLoaded() )
+		{
+			if ( cTaxi )
+			{
+				if( cPlayer1.GetVehicle() == cTaxi ) 
+				{ 
+					if (MissionFocus(cPlayer1))
+					{
+						UI_RemoveMissionHelpText(); 
+						cMissionPlayer = cPlayer1;
+						goto GiveMissionPrompts(); 
+					};
+				};
+				
+				if( cPlayer2.GetVehicle() == cTaxi ) 
+				{ 
+					if (MissionFocus(cPlayer2))
+					{
+						UI_RemoveMissionHelpText(); 
+						cMissionPlayer = cPlayer2;
+						goto GiveMissionPrompts(); 
+					};
+				};
+			};
+			
+			if( !wlMissionStart.IsLoaded() ) 
+			{
+				goto WaitForReturnToTile(); 
+			};
+			
+			if ( cTaxi )
+			{	
+				if (cPlayer1.DistanceToXZ(cTaxi) < 1 AND n == 0)
+				{
+					n = 1;
+					UI_SetMissionHelpText(tPrompt);
+				};
+				if (cPlayer1.DistanceToXZ(cTaxi) > 1 AND n == 1)
+				{
+					n = 0;
+					UI_RemoveMissionHelpText(); 			
+				};
+			};
+		};
+	};
+	Actions
+	{
+		Number nDirection(0);
+		Number nDirectionSeat(0);
+		if ( !cTaxi  ) 
+		{
+			nDirection = lTaxiSpawn.GetDirection();
+			
+			cTaxi = CreateAIVehicle( tVehicleType, "Taxi", lTaxiSpawn, nDirection );
+			Wait(1);
+			cTaxi.SetParked(true);			
+		};	
+	};
+};
+
+
+// Checks to see if the player starts the mission or not - handles accepting the mission
+State GiveMissionPrompts()
+{
+	// Number n(0);
+	
+	Conditions
+	{
+//		 Gets out of the vehicle before pressing LB to initiate mission...
+		if( cMissionPlayer.GetVehicle() != cTaxi ) 
+		{ 
+			cTaxi.SetParked(false);
+			UI_HideMissionPrompt();
+			MissionUnfocus();
+			goto WaitForPlayerInTaxi(); 
+		};
+
+		if( PlayerPressedButton(cMissionPlayer, "A") ) 
+		{ 
+			MissionActivate();
+		};
+	};
+	Actions
+	{
+		UI_ShowMissionPrompt("Hud_Mission_Bonus_Taxi", "MISSION_INSTRUCTIONS_TAXI", "MISSION_PROMPT", "MISSION_TITLE_TAXI");		
+	};
+};
+
+/////////////////////////////////////////////////////////////////////////////////
+/////  Cleanup
+/////////////////////////////////////////////////////////////////////////////////
+
+State Cleanup()
+{
+	Actions
+	{
+		// cleanup stuff...
+		if (wlCity.IsLoaded())
+		{
+			if ( cTaxi )
+			{
+				cTaxi.Deactivate();
+				cTaxi = "";
+			};
+			
+			if ( cPassengerCurrent )
+			{
+				cPassengerCurrent.SetScript("KillOffScreen");
+				cPassengerCurrent = "";
+			};
+
+			if ( hMissionStart )
+			{
+				hMissionStart.SetActive(false);
+			};
+		// All tidy, let the game know...
+		};
+		MissionCleanupEnd();
+	};
+};
+
+
+
+/////////////////////////////////////////////////////////////////////////////////
+//// Mission Loop
+/////////////////////////////////////////////////////////////////////////////////
+
+Function ParkTaxi()
+{
+	cTaxi.SetParked(true);
+};
+
+Function ParkTaxiDropOff()
+{
+	cTaxi.SetParked(true);
+	goto DropOffCustomer();
+};
+
+State Begin()
+{
+	Number n(0);
+	Actions
+	{
+			UI_StartMission();
+			hMissionStart.Trigger();
+			cTaxi.SetParked(false);				
+			UI_SetHeroBarMax(nHeroTarget);
+			
+			goto StageSetup();	
+	};
+};
+
+
+// States below here comprise the mission loop
+
+State StageSetup()
+{
+	HotSpot hPickup( tPickupHotspot + nStage.ToText("int 2") );
+	Locator lPickUp( "" + tPickupLocator + nStage.ToText("int 2")  );	
+	Number n(0);
+	Conditions
+	{
+	};
+	Actions
+	{
+		if (nStage == 1)
+		{
+			nTimeLimit = nStage01Timer;
+			wlCurrentPassenger = wlPassenger1;
+			While (n < nCust01PickupRings)
+			{
+				n = n + 1;
+				tCurrentRing = (tRing + n.ToText("Int 2") + "_Gold");
+				ChickenRingSetVisible(tCurrentRing, true);			
+			};			
+		}		
+		elseif (nStage == 2)
+		{
+			nTimeLimit = nStage02Timer;
+			wlCurrentPassenger = wlPassenger2;
+			n = nCust01PickupRings;
+			While (n < nCust01DropoffRings)
+			{
+				n = n + 1;
+				tCurrentRing = (tRing + n.ToText("Int 2") + "_Gold");
+				ChickenRingSetVisible(tCurrentRing, false);			
+			};						
+			While (n < nCust02PickupRings)
+			{
+				n = n + 1;
+				tCurrentRing = (tRing + n.ToText("Int 2") + "_Gold");
+				ChickenRingSetVisible(tCurrentRing, true);			
+			};						
+		}
+		elseif (nStage == 3)
+		{
+			nTimeLimit = nStage03Timer;
+			wlCurrentPassenger = wlPassenger3;
+		}
+		elseif (nStage == 4)
+		{
+			nTimeLimit = nStage04Timer;
+			wlCurrentPassenger = wlPassenger4;
+		}
+		elseif (nStage == 5)
+		{
+			nTimeLimit = nStage05Timer;
+			wlCurrentPassenger = wlPassenger5;
+		};
+		
+		
+		hPickup.SetActive(true);
+		hPickup.ScriptResponse("ParkTaxi");
+		hPickup.SetIcon("Bonus"); 
+		SetSatNavDestination( lPickUp );
+		
+		if ( nStage != 1 )
+		{
+			UI_SetMissionCounter( (nStage - 1), nMaxStage, false ) ;
+			UI_ShowMissionCounter( true );
+			Wait(1.5);
+			UI_ShowMissionCounter( false );
+		};		
+		
+		
+		missionTimer = 0;
+		UI_StopHUDTimer(); 
+		UI_ShowHUDTimer(false);
+		UI_SetHUDTimer( nTimeLimit, 1, missionTimer );
+		UI_ShowHUDTimer(true);
+		
+		
+		
+		Text t("MISSION_TAXI_DIRECTIONS_PICKUP_");
+		t = t + nStage.ToText("int 2");
+		UI_RadioCall( true, 6 );
+		Wait(0.25);
+		UI_SetMissionHelpText( t, 5 );
+
+		goto HeadToCustomer();
+	};
+};
+
+State HeadToCustomer( )
+{
+	Number n(0);
+	NUmber nTimeExceeded(0);
+	Conditions
+	{
+		if (nStage == 1 AND missionTimer > nStage01Timer AND nTimeExceeded == 0)
+		{
+			nTimeExceeded = 1;
+			n = 0;
+			While (n < nCust01PickupRings)
+			{
+				n = n + 1;
+				tCurrentRing = (tRing + n.ToText("Int 2") + "_Gold");
+				ChickenRingSetVisible(tCurrentRing, false);			
+			};				
+		};	
+		if (nStage == 2 AND missionTimer > nStage02Timer AND nTimeExceeded == 0)
+		{
+			nTimeExceeded = 1;
+			n = nCust01DropoffRings;
+			While (n < nCust02PickupRings)
+			{
+				n = n + 1;
+				tCurrentRing = (tRing + n.ToText("Int 2") + "_Gold");
+				ChickenRingSetVisible(tCurrentRing, false);			
+			};				
+		};			
+	
+		if ( wlCurrentPassenger.IsLoaded() )
+		{
+			goto SpawnCustomer();
+		};	
+		
+	};
+
+	Actions
+	{		
+	};
+};
+
+// Spawn the customer
+State SpawnCustomer( )
+{
+	Locator lSpawn( "" + tSpawnLocator + nStage.ToText("int 2") );
+	Number 	n(0);
+	Text 	tType01("BusinessMan");
+	Text 	tType02("ConstructionWorker");
+	Text 	tType03("Male01");
+	Text 	tType04("collect_nurse");
+	Number z(0);
+	Number nTimeExceeded(0);
+	Conditions
+	{
+		if (nStage == 1 AND missionTimer > nStage01Timer AND nTimeExceeded == 0)
+		{
+			nTimeExceeded = 1;
+			z = 0;
+			While (z < nCust01PickupRings)
+			{
+				z = z + 1;
+				tCurrentRing = (tRing + z.ToText("Int 2") + "_Gold");
+				ChickenRingSetVisible(tCurrentRing, false);			
+			};				
+		};		
+		if (nStage == 2 AND missionTimer > nStage02Timer AND nTimeExceeded == 0)
+		{
+			nTimeExceeded = 1;
+			z = nCust01DropoffRings;
+			While (z < nCust02PickupRings)
+			{
+				z = z + 1;
+				tCurrentRing = (tRing + z.ToText("Int 2") + "_Gold");
+				ChickenRingSetVisible(tCurrentRing, false);			
+			};				
+		};				
+	
+	};
+	Actions
+	{
+		
+		if (nPassengerSet == 0)
+		{
+			n = RandomInt( 1, 4 );
+			if ( n == 1 ) { tCharType = tType01; }
+			elseif ( n == 2 ) { tCharType = tType02; }
+			elseif ( n == 3 ) { tCharType = tType03; }
+			elseif ( n == 4 ) { tCharType = tType04; }
+			else { tCharType = tType01; };		
+		
+			Position pCabPos( cTaxi );
+			//gLocMoveTo = pCabPos;
+		
+			tCharType = tType01;  // REMOVE WHEN ISSUE OF CHARACTERS GETTING INTO VEHICLES IS SORTED
+			nPassengerSet = 1;
+		};
+		
+		n = lSpawn.GetDirection();
+		cPassengerCurrent = CreateAICharacter( tCharType, "Pedestrian",  lSpawn, n);		
+	
+		
+		goto CustomerFollowTaxi();
+	};
+};
+
+
+State CustomerFollowTaxi( )
+{
+	Locator lSpawn( "" + tSpawnLocator + nStage.ToText("int 2") );
+	Locator lMoveTo( "" );
+	Number n(1);
+	Number z(0);
+	Number y(0);
+	Number nTimeExceeded(0);
+	
+	Conditions
+	{
+		if (nStage == 1 AND missionTimer > nStage01Timer AND nTimeExceeded == 0)
+		{
+			nTimeExceeded = 1;
+			y = 0;
+			While (y < nCust01PickupRings)
+			{
+				y = y + 1;
+				tCurrentRing = (tRing + y.ToText("Int 2") + "_Gold");
+				ChickenRingSetVisible(tCurrentRing, false);			
+			};				
+		};	
+		if (nStage == 2 AND missionTimer > nStage02Timer AND nTimeExceeded == 0)
+		{
+			nTimeExceeded = 1;
+			y = nCust01DropoffRings;
+			While (y < nCust02PickupRings)
+			{
+				y = y + 1;
+				tCurrentRing = (tRing + y.ToText("Int 2") + "_Gold");
+				ChickenRingSetVisible(tCurrentRing, false);			
+			};				
+		};			
+	
+
+		if ( cPassengerCurrent.GetVehicle( ) != cTaxi  AND  cMissionPlayer.DistanceToXZ( lSpawn ) > 10 AND n == 0 ) 
+		{ 
+			cPassengerCurrent.MoveTo( lSpawn, 1.0 );
+			n = 1;
+		};
+		
+		if (n == 1 AND cPassengerCurrent.GetVehicle() != cTaxi AND cPassengerCurrent.DistanceToXZ( cMissionPlayer ) < 10)
+		{
+			// cPassengerCurrent.FollowCharacter( cTaxiSeat );		 // THIS HAS YET TO BE IMPLEMENTED BY CODE -- chrysp: this should be : cPassengerCurrent.EnterVehicle( cTaxi, "seatXYZ");
+			n = 0;
+		};
+		
+		if ( cPassengerCurrent.DistanceToXZ( cMissionPlayer ) < 3.5 )
+		{
+			z = cTaxi.GetSpeed();
+			if( z <= 1)
+			{
+				//cPassengerCurrent.TakeOver( cTaxiSeat );
+				//cPassengerCurrent.EnterVehicle(cTaxi, "seatXYZ");
+				goto HeadToDropOff();
+			};
+		};
+		
+		if ( !wlCurrentPassenger.IsLoaded() )
+		{
+			cPassengerCurrent.Kill();
+			goto HeadToCustomer();
+		};
+
+		
+	};
+	Actions
+	{
+	//cPassengerCurrent.FollowCharacter( cTaxiSeat );		 // THIS HAS YET TO BE IMPLEMENTED BY CODE	
+	};
+};
+
+
+State HeadToDropOff( )
+{
+	Locator lDropOff( "" + tDropOffLocator + nStage.ToText("int 2") );
+	HotSpot hDropOff( tDropOffHotspot + nStage.ToText("int 2") );
+	HotSpot hPickup( tPickupHotspot + nStage.ToText("int 2") );
+	Number n(0);
+	Number nTimeExceeded(0);
+	Timer nSetupTimer(0);
+	
+	Conditions
+	{
+		if (nStage == 1 AND missionTimer > nStage01Timer AND nTimeExceeded == 0 AND nSetupTimer > 1)
+		{
+			nTimeExceeded = 1;
+			n = nCust01PickupRings;
+			While (n < nCust01DropoffRings)
+			{
+				n = n + 1;
+				tCurrentRing = (tRing + n.ToText("Int 2") + "_Gold");
+				ChickenRingSetVisible(tCurrentRing, false);			
+			};				
+		};
+		if (nStage == 2 AND missionTimer > nStage02Timer AND nTimeExceeded == 0 AND nSetupTimer > 1)
+		{
+			nTimeExceeded = 1;
+			n = nCust02PickupRings;
+			While (n < nCust02DropoffRings)
+			{
+				n = n + 1;
+				tCurrentRing = (tRing + n.ToText("Int 2") + "_Gold");
+				ChickenRingSetVisible(tCurrentRing, false);			
+			};				
+		};		
+	};
+	Actions
+	{
+	
+		if (nStage == 1)
+		{
+			While (n < nCust01PickupRings)
+			{
+				n = n + 1;
+				tCurrentRing = (tRing + n.ToText("Int 2") + "_Gold");
+				ChickenRingSetVisible(tCurrentRing, false);			
+			};
+			While (n < nCust01DropoffRings)
+			{
+				n = n + 1;
+				tCurrentRing = (tRing + n.ToText("Int 2") + "_Gold");
+				ChickenRingSetVisible(tCurrentRing, true);			
+			};			
+		};
+		if (nStage == 2)
+		{
+			n = nCust01DropoffRings;
+			While (n < nCust02PickupRings)
+			{
+				n = n + 1;
+				tCurrentRing = (tRing + n.ToText("Int 2") + "_Gold");
+				ChickenRingSetVisible(tCurrentRing, false);			
+			};
+			While (n < nCust02DropoffRings)
+			{
+				n = n + 1;
+				tCurrentRing = (tRing + n.ToText("Int 2") + "_Gold");
+				ChickenRingSetVisible(tCurrentRing, true);			
+			};						
+		};		
+	
+		hPickup.SetActive(false);
+		cTaxi.SetParked(false);
+		Text t("MISSION_TAXI_DIRECTIONS_DROPOFF_");
+		t = t + nStage.ToText("int 2");
+		UI_SetMissionHelpText( t, 5 );
+		
+		hDropOff.SetActive(true);
+		hDropOff.ScriptResponse("ParkTaxiDropOff");
+		hDropOff.SetIcon("Bonus"); 
+		SetSatNavDestination( lDropOff );
+		//  REMOVE THIS ONCE WE CAN RELEASE CHARACTERS TO THE CITY AS AMBIENT CHARACTERS
+	};
+};
+
+
+State DropOffCustomer( )
+{
+	Locator lDropOff( "" + tDropOffLocator + nStage.ToText("int 2") );
+	HotSpot hDropOff( tDropOffHotspot + nStage.ToText("int 2") );
+	Number n(0);
+	Conditions
+	{
+		n = cTaxi.GetSpeed();
+		If( n <= 1 )
+		{
+			hDropOff.SetActive(false);			
+			//cPassengerCurrent.ReleaseTakeOver(0.5, 1);
+			//cPassengerCurrent.ExitVehicle();  //chrysp: fix this up
+			goto Reward();
+		};
+		
+		if ( cPassengerCurrent.InVehicle( cTaxiSeat )  AND  cMissionPlayer.DistanceToXZ( lDropOff ) > 20 ) 
+		{
+			goto HeadToDropOff();
+		};
+		
+	};
+	Actions
+	{
+		
+	};
+};
+
+
+State Reward( )
+{
+	Conditions
+	{
+	};
+	Actions
+	{	
+		// Award the player based on the time taken
+		nPassengerSet = 0;
+		nBonusThreshold = nTimeLimit / 4;
+		nStudAward = nTimeLimit - missionTimer;
+
+		goto PassengerResponse();
+	};
+};
+
+State PassengerResponse( )
+{
+	Text t("");
+	Conditions
+	{
+	};
+	Actions
+	{
+		if ( MissionTimer >= nTimelimit )
+		{
+			t = tPoor_01; 
+		}
+		else
+		{
+			if (nStudAward > nBonusThreshold)
+			{
+				t = tGood_01; 
+			}
+			else
+			{
+				t = tNeutral_01;	
+			};
+		};	
+		// Give customer dialogue feedback (temporary version)
+		UI_SetMissionHelpText( t, 4 ); 
+		
+		cTaxi.SetParked(false);
+		UI_StopHudTimer();	
+		wait(1);
+		goto NextStage();
+	};
+};
+
+State NextStage( )
+{
+	Conditions
+	{
+	};
+	Actions
+	{	
+		// Set up ready for next stage or complete the mission
+		nStage = nStage + 1;
+		cPassengerCurrent.SetScript( "KillOffScreen" );;  //  REMOVE THIS ONCE WE CAN RELEASE CHARACTERS TO THE CITY AS AMBIENT CHARACTERS 
+		if ( nStage > nMaxStage ) 
+		{
+			goto MissionEnd();
+		}
+		else
+		{
+			goto StageSetup();
+		};
+	};
+};
+
+State OutOfTime( ) 
+{
+	Conditions
+	{
+		
+	};
+	Actions
+	{
+		UI_EndMission("MISSION_FAIL_TIMEOUT", false);
+		goto HandleFailScreen();
+	};
+};
+
+
+State HandleFailScreen( )
+{
+	Timer time(0);
+	Bool b(false);
+	Conditions
+	{
+		if ( time > 0.1  AND  ( PlayerPressedButton(cMissionPlayer, "A")  OR  PlayerPressedButton("Y") ) AND !b )
+		{
+			UI_ResetMission();
+			goto Reset();
+		}
+		else
+		{
+			if ( (b AND !cMissionPlayer.GetVehicle()) OR  PlayerPressedButton(cMissionPlayer, "A")  OR  PlayerPressedButton("Y") )
+			{
+				UI_ResetMission();
+				goto Reset();
+			};
+		};
+		
+	};
+	Actions
+	{
+		if ( cMissionPlayer.GetVehicle() ) 
+		{
+			b = true;
+		};	
+	};
+};
+
+
+
+State MissionEnd( )
+{
+	Number n(0);
+	Conditions
+	{
+	};
+	Actions
+	{
+		n = nCust02PickupRings;
+		While (n < nCust02DropoffRings)
+		{
+			n = n + 1;
+			tCurrentRing = (tRing + n.ToText("Int 2") + "_Gold");
+			ChickenRingSetVisible(tCurrentRing, false);			
+		};					
+		// UI_EndMission("MISSION_COMPLETE", true);
+		goto Reset();
+	};
+};
+
+State Reset( )
+{
+	Conditions
+	{
+	};
+	Actions
+	{
+		UI_SetStatsStuds();
+		SetSatNavDestination();
+		SetHotSpot();
+		UI_StopHUDTimer();
+		UI_ShowHUDTimer(false);	
+		cTaxi = "";
+		if ( nStage > nMaxStage ) 
+		{
+			MissionComplete(); // NEEDS TO CHECK AGAINST MISSION COMPLETE STATUS AND FAIL / END MISSION IF MISSION FAILED / ABANDONED ONCE THAT STATE IS AVAILABLE
+		}
+		else
+		{
+			MissionAbort();
+		};	
+	};
+};

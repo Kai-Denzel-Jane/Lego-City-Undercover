@@ -1,0 +1,109 @@
+Character cPlayer1("player1");
+Character cPlayer2("player2");
+
+Bool bPlayer1(false);
+Bool bPlayer2(false);
+
+Area aAllowA("Area_Detective_TD_01");
+
+Gizmo gDetectiveSpot("iDETECTIVE_TD_CMPLX");
+
+
+
+Function TurnOffFalseSpots( Number nLastNumber, bool bOn, Text tSpot )
+{
+	Number n(0);
+	Gizmo gSpot("");
+	Text t("");
+	
+	While ( n <= nLastNumber )
+	{
+		t = tSpot;
+		
+		if ( n > 0  AND  n < 10)
+		{
+			t = t + n.ToText("int 1");
+		}		
+		elseif ( n >= 10)
+		{
+			t = t + n.ToText("int 2");
+		}
+		elseif ( n >= 100)
+		{
+			t = t + n.ToText("int 3");
+		};
+		
+		gSpot = t;
+		gSpot.SetActive( bOn );
+		gSpot.SetVisible( bOn );
+		
+		n = n + 1;
+	};
+};
+
+
+
+
+State Base( ) 
+{
+	Conditions
+	{
+		if ( !bPlayer1 )
+		{
+			if ( cPlayer1.InArea(aAllowA) )
+			{
+				bPlayer1 = true;
+				AllowDetectiveMode(cPlayer1, bPlayer1);
+			};
+		}
+		else
+		{
+			if ( !cPlayer1.InArea(aAllowA) )
+			{
+				bPlayer1 = false;
+				AllowDetectiveMode(cPlayer1, bPlayer1);
+			};
+		};
+		
+		if ( !bPlayer2 )
+		{
+			if ( cPlayer2.InArea(aAllowA) )
+			{
+				bPlayer2 = true;
+				AllowDetectiveMode(cPlayer2, bPlayer2);
+			};
+		}
+		else
+		{
+			if ( !cPlayer2.InArea(aAllowA) )
+			{
+				bPlayer2 = false;
+				AllowDetectiveMode(cPlayer2, bPlayer2);
+			};
+		};
+		
+		if ( gDetectiveSpot )
+		{
+			if ( gDetectiveSpot.GetOutput(0) )
+			{
+				goto Ended();
+			};
+		};		
+	};
+	Actions
+	{
+	};
+};
+
+State Ended( )
+{
+	Actions
+	{
+		AllowDetectiveMode(cPlayer1, false);
+		AllowDetectiveMode(cPlayer2, false);
+		
+		TurnOffFalseSpots(0, false, "iDETECTIVE_TD_CMPLX_FALSE" );
+	};
+};
+
+Base();

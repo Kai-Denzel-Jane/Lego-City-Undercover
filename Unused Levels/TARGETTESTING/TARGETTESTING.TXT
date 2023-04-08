@@ -1,0 +1,3 @@
+character "Cop" player
+character "CopOfficerFemale" player
+

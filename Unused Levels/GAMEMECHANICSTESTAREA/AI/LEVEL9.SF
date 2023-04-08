@@ -1,0 +1,84 @@
+Character cPlayer1("player1");
+Character cPlayer2("player2");
+Character cTeleport("");
+
+Bool bPlayer1(false);
+Bool bPlayer2(false);
+
+Area aTeleport("Teleport");
+
+//Gizmo gTeleporter("iASTRO_TELEPORT_CMPLX");
+Gizmo gTeleportBeam("iASTRO_BEAMDOWN_CMPLX1");
+Gizmo gMiniCut("MiniCut_Teleport");
+
+// Toggles being able to equip the magnifying glass and not, based on each player being within the associated trigger areas
+State Base( ) 
+{
+	Conditions
+	{
+		if ( gTeleporter.GetOutput(3) )
+		{
+			goto AwaitTeleport( );
+		};
+	};
+	Actions
+	{
+		gTeleportBeam.SetActive(false);
+		gTeleportBeam.SetVisible(false);
+		gMiniCut.SetActive(false);
+	};
+};
+
+// Stops any characters being able to equip the magnifying glass, which were previously allowed to due to being within this mechanic's area
+State AwaitTeleport( )
+{
+	Conditions
+	{
+		if ( cPlayer1.InArea(aTeleport) )
+		{
+			cTeleport = cPlayer1;
+			goto Teleport();
+		};
+		
+		if ( cPlayer2.InArea(aTeleport) )
+		{
+			cTeleport = cPlayer2;
+			goto Teleport();
+		};
+	};
+};
+
+State Teleport( )
+{
+	Number n(0);
+	Actions
+	{
+		if ( cTeleport == cPlayer1 )
+		{
+			n = 1;
+		}
+		else
+		{
+			n = 2;
+		};	
+		gMiniCut.SetActive(true);
+		//PlayerSetMovement(n, false);
+		gTeleportBeam.SetActive(true);
+		gTeleportBeam.SetVisible(true);
+		cTeleport.FadeOut(1.0);		
+		Wait(1.5);
+		cTeleport.Deactivate();
+		Wait();
+		
+		Wait(4);
+		cTeleport.FadeIn(1.0);				
+		cTeleport.Activate();
+		cTeleport.Teleport(gTeleportBeam);
+		Wait(0.2);
+		//PlayerSetMovement(n, true);
+		goto Base();
+		
+	};
+};
+
+Base();

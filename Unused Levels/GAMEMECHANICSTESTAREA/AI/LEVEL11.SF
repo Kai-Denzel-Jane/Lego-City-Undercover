@@ -1,0 +1,222 @@
+Character cRCCar("RCCar");
+Gizmo gTechno("RC_CAR_TECHNO");	// police vehicle buildit
+Gizmo gPickup("RCCar_Reward");
+Gizmo gBlowup("Pickup_Reveal_Bl");
+Gizmo gFlapStatic("iCarFlap_CMPLX.Car_Flap_Static");
+Gizmo gFlapOpen("iCarFlap_CMPLX.Car_Flap_Open");
+Gizmo gFlapClose("iCarFlap_CMPLX.Car_Flap_Close");
+Gizmo gMiniCut_StudTrail("MiniCut_StudTrail_Unveil");
+Number nMaxTime(25);
+Timer timerDuration(0);
+
+Text tStudChain("StudChain");
+Text tSockNum("01");
+
+Bool bBuilt(false);
+Bool bOpen(false);
+
+Area aOutSide("Area_RC_Bounds");
+Area aStart("Area_Start");
+
+Locator lMoveTo("Locator_RCCar_MoveTo");
+
+Position pos_RCStart(cRCCar);
+
+State Base( )
+{
+	Conditions
+	{
+		//if ( wlTile.IsLoaded() )
+		//{			
+		//	goto AwaitUnload();
+		//};
+	};
+	Actions
+	{
+		SockSetEnabled(tSockNum, false);
+		gBlowup.SetActive(false);
+		gBlowup.SetVisible(false);
+		
+		if ( gPickup )
+		{
+			gPickup.SetActive(false);
+			gPickup.SetVisible(false);
+		};
+		
+		gFlapOpen.SetActive(false);
+		gFlapClose.SetActive(false);
+		gFlapStatic.SetActive(true);
+		bBuilt = false;
+		goto AwaitUnload();
+	};
+};
+
+State AwaitUnload( )
+{
+
+	Number n(0);
+	Conditions
+	{
+		if ( cRCCar )
+		{
+			if ( TechnoControlledBy( cRCCar ) )
+			{
+				goto AwaitMiniGame();
+			};
+		};			
+	};
+	Actions
+	{
+		if ( bOpen )
+		{
+			bOpen = false;
+			gFlapOpen.SetActive(false);
+			gFlapClose.SetActive(true);
+		};
+	};
+};
+
+
+State AwaitMiniGame()
+{		
+	Number n(0);
+	Conditions
+	{	
+		if ( !TechnoControlledBy( cRCCar )  ||  !cRCCar.InArea(aOutSide) )
+		{
+			goto DisablePause();
+		};
+
+		if ( bOpen ) 
+		{
+			if ( !cRCCar.InArea(aStart) )
+			{
+				bOpen = false;
+				gFlapOpen.SetActive(false);
+				gFlapClose.SetActive(true);
+			};
+		};
+	};
+	Actions
+	{
+		gFlapOpen.SetActive(true);
+		bOpen = true;
+		cRCCar.MoveTo(lMoveTo, 1);
+		
+		n = gMiniCut_StudTrail.MinicutGetPlayTime();
+		gMiniCut_StudTrail.SetActive(true);
+		Wait(3.25);
+		n = n - 3.25;
+		StudChainStart(tStudChain);	
+	
+		Wait(n);
+		SockSetEnabled(tSockNum, true);
+		goto MiniGame();
+	};
+};
+
+
+
+State MiniGame( )
+{
+	
+	Bool bTimerStarted(false);
+	
+	Conditions
+	{
+		
+		if ( StudChainAllCollected(tStudChain) )
+		{
+			if ( gPickup )
+			{
+				goto UnveilBrick();
+			}
+			else
+			{
+				goto DisablePause();
+			};			
+		};
+		
+		if ( bTimerStarted )
+		{
+			if ( timerDuration > nMaxTime )
+			{
+				goto DisablePause();
+			};
+		};
+		
+		
+		if ( !TechnoControlledBy( cRCCar ) ||  !cRCCar.InArea(aOutSide) )
+		{			
+			goto DisablePause();
+		};	
+
+		if ( bOpen ) 
+		{
+			if ( !cRCCar.InArea(aStart) )
+			{
+				bOpen = false;
+				gFlapOpen.SetActive(false);
+				gFlapClose.SetActive(true);
+			};
+		};
+				
+	};
+	Actions
+	{		
+		Wait(1);
+		timerDuration = 0;
+		timerDuration.Reset();
+		bTimerStarted = true;
+		UI_SetHUDTimer( nMaxTime, 1 , timerDuration ); 
+		UI_ShowHUDTimer(true);
+	};
+};
+
+
+State DisablePause( )
+{
+	Actions
+	{
+		if ( bOpen )
+		{
+			bOpen = false;
+			gFlapOpen.SetActive(false);
+			gFlapClose.SetActive(true);
+		};
+		StudChainReset(tStudChain);
+		gTechno.SetActive(false);
+		UI_ShowHUDTimer(false);
+		UI_StopHUDTimer();
+		SockSetEnabled(tSockNum, false);
+		cRCCar.SetHealth(#Set, 0);
+		Wait(1);
+		gTechno.Reset();
+		cRCCar.ResetToOrigin();
+		//cCCar.Teleport(pos_RCStart);
+		cRCCar.Deactivate();	
+		cRCCar.Activate();		
+		goto AwaitUnload();
+	};
+};
+
+
+State UnveilBrick( )
+{
+	Gizmo gMinicut("MiniCut_RCCar_Pickup");
+	Actions
+	{
+		gMinicut.SetActive(true);
+		Wait(3);
+		gBlowup.SetActive(true);
+		gBlowup.Trigger();
+		Wait(1);
+		gPickup.SetActive(true);
+		gPickup.SetVisible(true);
+		gPickup = "";
+		goto DisablePause();
+	};
+};
+
+
+Base();

@@ -1,0 +1,170 @@
+Timer scripttimer(0);
+Character me(GetCharacter());
+
+// Exact copy of the robber script but with the inclusion of the 'MakeAlien' command
+// not really, as I type, what might be wanted for the alien but I'm just getting it to work
+
+State Base()
+{
+	Conditions
+	{
+	};
+	Actions
+	{
+		_SetSide("'Baddie'");
+
+		// So they can walk only on pavements.
+		_SetZoneAbility("clear +A +B +C");
+
+		// So they aren't walking around tooled up.
+		_PutAwayCurrentItem("");
+		_MakeAlien("");
+		goto Idle();
+	};
+};
+
+
+
+State Idle()
+{
+	Conditions
+	{
+		if( _NearestPlayerRange("")< 15.0 ) { goto Wander(); };
+	};
+	Actions
+	{
+		// Sets their idling animation. I'm assuming this is called at random as they wander around...
+		_Idle("");
+	};
+};
+
+
+
+State Wander()
+{
+	Conditions
+	{
+		if( _NearestPlayerRange("")< 10.0 ) { goto Melee(); };
+		if( _NearestPlayerRange("")> 15.0 ) { goto Idle(); };
+	};
+	Actions
+	{
+		// We reset the timer here so that the above check for hostility doesn't immediately become true if the player is nearby.
+		// i.e. when they start the game if they're near to some people they won't be set upon with baseball bats with no warning. ;)
+		scripttimer.Reset();
+		_PutAwayCurrentItem("");
+		// Set the behaviour to meander between the Wanders (those funny pulsey balls in the LED editor) which are within the 'pedestrian' group, at walking speed.
+		_WanderOnNearestSystem("name=pedestrian walk");
+	};
+};
+
+
+
+// The player is within 7-10 units of distance but hasn't been below 10 units of distance yet.
+// The robber will get out their gun, but not use it.
+State Wary()
+{
+	Conditions
+	{
+		if( _NearestPlayerRange("")< 7.0 ) { goto BeingApproached(); };
+		if( _NearestPlayerRange("")> 10.0 ) { goto Wander(); };
+		if( _NearestPlayerRange("")> 15.0 ) { goto Idle(); };
+	};
+	Actions
+	{
+		// Whip out yer gun!
+		_GetDefaultItemOut("");
+	};
+};
+
+
+
+// The player is between 3.5-7 units of distance. The robber will fire a few shots and then try and get away. If the player gets below 5 units they will put away their gun and flee, but at least they're ready for melee.
+State BeingApproached()
+{
+	Conditions
+	{
+		If( scripttimer> 2.0 ) { goto FleeingWithGunOut(); };
+		if( _NearestPlayerRange("")< 3.5 ) { goto FleeingWithGunAway(); };
+	};
+	Actions
+	{
+		// We do this so that the AI's go into shooty mode for at least 3 seconds, giving the player a chance to close the distance.
+		scripttimer.Reset();
+		// Set up the whole 'being shooty' thing.
+		_SetOpponent("'opponent=nearest_player'");
+		_OverrideAnimation("'reset'");
+		_CanUseWeapon("'TRUE'");
+		_DontPush("'FALSE'");
+		_SetInvulnerable("'FALSE'");
+		_EngageOpponent("'firerange=8' 'static'");
+	};
+};
+
+
+
+// They're attempting to get 17 units away from the player, after which they'll go back to wandering and put away their gun.
+// If the player gets within 5 units they'll put their gun away and go into FleeingWithGunAway.
+State FleeingWithGunOut()
+{
+	Conditions
+	{
+		if( _NearestPlayerRange("")> 11.0 ) { goto Wander(); };
+		if( _NearestPlayerRange("")< 3.5 ) { goto FleeingWithGunAway(); };
+	};
+	Actions
+	{
+		_MoveAwayFromPlayer("12.0");
+		_Setcurrentspeed("speed=run");
+	};
+};
+
+
+
+// They're attempting to get at least 10 units away before they'll risk getting out their gun, just in case the player gets within melee distance. Then they'll go into BeingApproached before running away some more.
+State FleeingWithGunAway()
+{
+	Conditions
+	{
+		if( _NearestPlayerRange("")> 7.0 ) { goto BeingApproached(); };
+		If( scripttimer> 2 AND _NearestPlayerRange("")< 1.0 ) { goto Melee(); };
+	};
+	Actions
+	{
+		scripttimer.Reset();
+		_PutAwayCurrentItem("");
+		_MoveAwayFromPlayer("8.0");
+		_Setcurrentspeed("speed=run");
+	};
+};
+
+
+
+// The player is within 1 unit. Go into melee mode! Then after a few seconds, run like hell via FleeingWithGunAway. Also do this if the player retreats to 2 units.
+State Melee()
+{
+	Conditions
+	{
+	//	If( _NearestPlayerRange("")> 2.0 ) { goto FleeingWithGunAway(); };
+	//	If( scripttimer> 2.0 ) { goto FleeingWithGunAway(); };
+	};
+	Actions
+	{
+		scripttimer.Reset();
+		_SetOpponent("'opponent=nearest_player'");
+		_OverrideAnimation("'reset'");
+		_DontPush("'FALSE'");
+		_SetInvulnerable("'FALSE'");
+		_CanUseWeapon("'FALSE'");
+		_SetUseOneAtOnce("'True'");
+		_AttackOpponent("MinRange=0.4 circle	attack_override=PUNCH_SPECIAL");
+	};
+};
+
+
+
+
+
+
+
+Base();

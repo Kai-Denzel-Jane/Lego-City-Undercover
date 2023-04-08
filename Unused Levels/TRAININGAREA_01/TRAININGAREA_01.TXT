@@ -1,0 +1,1532 @@
+special_draw_distance 25.0
+
+sprint_level
+
+
+// Player Characters ************************************
+
+character "Cop" player
+character "Fireman" player
+character "farmer" resident
+character "miner" resident
+character "Astronaut" resident
+character "construction_legocityconstructionworker" resident
+character "robber" resident
+character "Civilian_ChaseMcCain" resident
+
+// VEHICLES ************************************
+
+character "Aircraft_UFO" resident
+
+character "Hospital_Ambulance" resident
+
+character "Civic_Taxi" resident
+character "Civic_Taxi_Passenger" resident
+
+//character "Industrial_TowTruck" resident
+//character "SaloonCars_Alom" resident // REMOVE ONCE DYNAMICALLY STREAMING CHARACTER TYPES SUCH AS THIS IS IMPLEMENTED IN SCRIPTS
+//character "SaloonCars_Cetan" resident // REMOVE ONCE DYNAMICALLY STREAMING CHARACTER TYPES SUCH AS THIS IS IMPLEMENTED IN SCRIPTS
+
+character "Police_Imprisoner" resident
+character "Police_Helicopter_1" resident
+character "Police_OffRoader" resident
+character "Police_MOV_Cab" resident
+character "Police_MOV_Trailer" resident
+character "Police_PursuitBike" resident
+character "Police_SquadCar" resident
+
+character "RC_Cars_Spook" resident
+		
+// AMBULANCE MISSION AI MESSAGES
+
+AIMessage "amb_01_bui" output0 0 output1 1
+AIMessage "amb_01_act" output0 0 output1 1
+AIMessage "amb_02_bui" output0 0 output1 1
+AIMessage "amb_02_act" output0 0 output1 1
+AIMessage "amb_03_bui" output0 0 output1 1
+AIMessage "amb_03_act" output0 0 output1 1
+AIMessage "amb_04_bui" output0 0 output1 1
+AIMessage "amb_04_act" output0 0 output1 1
+AIMessage "amb_05_bui" output0 0 output1 1
+AIMessage "amb_05_act" output0 0 output1 1
+AIMessage "amb_reset" output0 0 output1 1
+
+// REPAIR MISSION AI MESSAGES
+
+AIMessage "repair_01_com" output0 0 output1 1
+AIMessage "repair_01_act" output0 0 output1 1
+AIMessage "repair_02_com" output0 0 output1 1
+AIMessage "repair_02_act" output0 0 output1 1
+
+// PIZZA DELIVERY AI MESSAGES
+
+AIMessage "ut_pizza_S1" output0 0 output1 1
+AIMessage "ut_pizza_S1_end" output0 0 output1 1
+AIMessage "ut_pizza_S2" output0 0 output1 1
+AIMessage "ut_pizza_S2_end" output0 0 output1 1
+AIMessage "ut_pizza_reset" output0 0 output1 1
+
+// JAWS MISSION AI MESSAGES
+
+AIMessage "ut_jaws_start" output0 0 output1 1
+AIMessage "ut_jaws_end" output0 0 output1 1
+
+//  BAGGAGE HANDLER AI MESSAGES
+
+AIMessage "bag_reset" 		output0 0 output1 1
+AIMessage "bag_stage01_start" 	output0 0 output1 1
+AIMessage "bag_stage01_end" 	output0 0 output1 1
+AIMessage "bag_stage02_start" 	output0 0 output1 1
+AIMessage "bag_stage02_end" 	output0 0 output1 1
+AIMessage "bag_score" 		output0 0 output1 1
+//AIMessage "bag_Catcher_01"	output0 0 output1 1
+//AIMessage "bag_Catcher_02"	output0 0 output1 1
+//AIMessage "bag_Catcher_03"	output0 0 output1 1
+//AIMessage "bag_Catcher_04"	output0 0 output1 1
+//AIMessage "bag_Catcher_05"	output0 0 output1 1
+//AIMessage "bag_Catcher_06"	output0 0 output1 1
+
+
+// COMBINE HARVESTER AI MESSAGES
+
+AIMessage "wifl_cornblowup" output0 0 output1 1
+AIMessage "wifl_cornshow" output0 0 output1 1
+AIMessage "wifl_cornhide" output0 0 output1 1
+AIMessage "wifl_flowreset" output0 0 output1 1
+
+
+// Tow Truck Mission - Buildit Repair messages
+AIMessage "nyut_ttrepaired" output0 0 output1 1 
+AIMessage "nyut_ttreset" output0 0 output1 1 
+
+// ROOFTOP PARKOUR AI MESSAGES
+
+AIMessage "ny_ut_parkour_1_s1" output0 0 output1 1
+AIMessage "ny_ut_parkour_1_s2" output0 0 output1 1
+AIMessage "ny_ut_parkour_1_s3" output0 0 output1 1
+AIMessage "ny_ut_parkour_1_s4" output0 0 output1 1
+AIMessage "ny_ut_parkour_reset" output0 0 output1 1
+
+// ATM Smash - Scripted Event Messages
+
+AIMessage "sf_rd_atm_smash" output0 0 output1 1
+AIMessage "sfrd_atm_smashb" output0 0 output1 1
+
+// Story Mission 05 AI Message
+AIMessage "StoryMission_05_stage" output0 0 output1 1
+
+
+//-----------------------------------------------
+//-----------------------------------------------
+
+settings_start=1
+	farclip=1100
+	nearclip=0.1
+
+	backr_top=0
+	backg_top=0
+	backb_top=0
+	backr_bottom=0
+	backg_bottom=0
+	backb_bottom=0
+
+settings_end
+
+//-----------------------------------------------
+//-----------------------------------------------
+
+// Rooftop Parkour Bit Cams
+
+sock_start 16
+	cam_blend_time 0.5
+	campos_seek 5.0
+	cam_x_offset -2.2
+	cam_y_offset 1.8
+	cam_z_offset -1.8
+	offset_blend_x_ratio 1.0
+	offset_blend_y_ratio 1.0
+	offset_blend_z_ratio 1.0
+	cam_pullback_ratio_xz 0.5
+	cam_look_ratio_y 0.935
+sock_end
+
+sock_start 17
+	ignore_socks 16
+	cam_blend_time 0.5
+	campos_seek 5.0
+	cam_x_offset 0
+	cam_y_offset 1.8
+	cam_z_offset -2.6
+	offset_blend_x_ratio 1.0
+	offset_blend_y_ratio 1.0
+	offset_blend_z_ratio 1.0
+	cam_pullback_ratio_xz 0.5
+	cam_look_ratio_y 0.935
+sock_end
+
+sock_start 43
+	cam_blend_time 1.0
+	campos_seek 5.0
+	//cam_x_offset -3.0
+	//cam_y_offset 1.8
+	//cam_z_offset -1.8
+	//offset_blend_x_ratio 1.0
+	//offset_blend_y_ratio 1.0
+	//offset_blend_z_ratio 1.0
+	cam_pullback_ratio_xz 0.5
+	cam_look_ratio_y 0.935
+sock_end
+
+sock_start 44
+	cam_blend_time 1.0
+	campos_seek 5.0
+	cam_x_offset 0.0
+	cam_y_offset 1.4
+	cam_z_offset -3.8
+	offset_blend_x_ratio 1.0
+	offset_blend_y_ratio 1.0
+	offset_blend_z_ratio 1.0
+	cam_pullback_ratio_xz 0.5
+	cam_look_ratio_y 0.935
+sock_end
+
+sock_start 45
+	cam_blend_time 1.0
+	campos_seek 5.0
+	//cam_x_offset 0.0
+	//cam_y_offset 1.4
+	//cam_z_offset -3.8
+	//offset_blend_x_ratio 1.0
+	//offset_blend_y_ratio 1.0
+	//offset_blend_z_ratio 1.0
+	cam_pullback_ratio_xz 0.5
+	cam_look_ratio_y 0.935
+sock_end
+
+sock_start 46
+	cam_blend_time 1.0
+	campos_seek 5.0
+	cam_x_offset 1.5
+	cam_y_offset 1.4
+	cam_z_offset 2.8
+	offset_blend_x_ratio 1.0
+	offset_blend_y_ratio 1.0
+	offset_blend_z_ratio 1.0
+	cam_pullback_ratio_xz 0.5
+	cam_look_ratio_y 0.935
+	ignore_socks 45
+sock_end
+
+sock_start 47
+	cam_blend_time 2.0
+	campos_seek 5.0
+	cam_x_offset -0.8
+	cam_y_offset 1.4
+	cam_z_offset 3.8
+	offset_blend_x_ratio 1.0
+	offset_blend_y_ratio 1.0
+	offset_blend_z_ratio 1.0
+	cam_pullback_ratio_xz 0.5
+	cam_look_ratio_y 0.935
+sock_end
+
+sock_start 48
+	cam_blend_time 1.0
+	campos_seek 5.0
+	cam_x_offset -3.8
+	cam_y_offset 1.4
+	cam_z_offset 0.5
+	offset_blend_x_ratio 1.0
+	offset_blend_y_ratio 1.0
+	offset_blend_z_ratio 1.0
+	cam_pullback_ratio_xz 0.5
+	cam_look_ratio_y 0.935
+sock_end
+
+sock_start 49
+	cam_blend_time 1.0
+	campos_seek 5.0
+	cam_x_offset 3.8
+	cam_y_offset 1.4
+	cam_z_offset 0.5
+	offset_blend_x_ratio 1.0
+	offset_blend_y_ratio 1.0
+	offset_blend_z_ratio 1.0
+	cam_pullback_ratio_xz 0.5
+	cam_look_ratio_y 0.935
+	ignore_socks 47 48
+sock_end
+
+sock_start 50
+	cam_blend_time 1.0
+	campos_seek 5.0
+	cam_x_offset 3.8
+	cam_y_offset 1.4
+	cam_z_offset 3.2
+	offset_blend_x_ratio 1.0
+	offset_blend_y_ratio 1.0
+	offset_blend_z_ratio 1.0
+	cam_pullback_ratio_xz 0.5
+	cam_look_ratio_y 0.935
+sock_end
+
+sock_start 51
+	cam_blend_time 1.0
+	campos_seek 5.0
+	cam_x_offset 2.2
+	cam_y_offset 1.2
+	cam_z_offset 2.0
+	offset_blend_x_ratio 1.0
+	offset_blend_y_ratio 1.0
+	offset_blend_z_ratio 1.0
+	cam_pullback_ratio_xz 0.5
+	cam_look_ratio_y 0.935
+sock_end
+
+sock_start 52
+	cam_blend_time 1.0
+	campos_seek 5.0
+	cam_x_offset 2.2
+	cam_y_offset 2.6
+	cam_z_offset 3.2
+	offset_blend_x_ratio 1.0
+	offset_blend_y_ratio 1.0
+	offset_blend_z_ratio 1.0
+	cam_pullback_ratio_xz 0.5
+	cam_look_ratio_y 0.935
+sock_end
+
+sock_start 53
+	cam_blend_time 1.0
+	campos_seek 5.0
+	cam_x_offset 3.8
+	cam_y_offset 1.4
+	cam_z_offset 3.2
+	offset_blend_x_ratio 1.0
+	offset_blend_y_ratio 1.0
+	offset_blend_z_ratio 1.0
+	cam_pullback_ratio_xz 0.5
+	cam_look_ratio_y 0.935
+sock_end
+
+sock_start 55
+	cam_blend_time 1.0
+	campos_seek 5.0
+	cam_x_offset -1.2
+	cam_y_offset 2.0
+	cam_z_offset 1.6
+	offset_blend_x_ratio 1.0
+	offset_blend_y_ratio 1.0
+	offset_blend_z_ratio 1.0
+	cam_pullback_ratio_xz 0.5
+	cam_look_ratio_y 0.935
+sock_end
+
+sock_start 56
+	cam_blend_time 1.0
+	campos_seek 5.0
+	cam_x_offset -2.5
+	cam_y_offset 2.6
+	cam_z_offset -0.2
+	offset_blend_x_ratio 1.0
+	offset_blend_y_ratio 1.0
+	offset_blend_z_ratio 1.0
+	cam_pullback_ratio_xz 0.5
+	cam_look_ratio_y 0.935
+sock_end
+
+sock_start 57
+	cam_blend_time 1.0
+	campos_seek 5.0
+	cam_x_offset -2.5
+	cam_y_offset 2.6
+	cam_z_offset -0.2
+	offset_blend_x_ratio 1.0
+	offset_blend_y_ratio 1.0
+	offset_blend_z_ratio 1.0
+	cam_pullback_ratio_xz 0.5
+	cam_look_ratio_y 0.935
+sock_end
+
+sock_start 58
+	cam_blend_time 1.0
+	campos_seek 5.0
+	cam_x_offset -2.5
+	cam_y_offset 2.6
+	cam_z_offset -0.2
+	offset_blend_x_ratio 1.0
+	offset_blend_y_ratio 1.0
+	offset_blend_z_ratio 1.0
+	cam_pullback_ratio_xz 0.5
+	cam_look_ratio_y 0.935
+sock_end
+
+
+sock_start 60
+	cam_blend_time 2
+	ignore_socks 198 200 243 100
+	cam_look_ratio_y 0.85
+sock_end
+
+sock_start 61
+	cam_blend_time 2
+	ignore_socks 198 200
+	cam_look_ratio_y 0.875
+sock_end
+
+sock_start 62
+	cam_blend_time 2.0
+	ignore_socks 198 200 61 60 101
+sock_end
+
+sock_start 63
+	cam_blend_time 2.0
+	ignore_socks 198 200 64 67
+sock_end
+
+sock_start 64
+	cam_blend_time 2.0
+	ignore_socks 198 200 63 67
+sock_end
+
+sock_start 65
+	cam_blend_time 2.25
+	ignore_socks 198 200 63 64
+sock_end
+
+sock_start 66
+	cam_blend_time 2.25
+	ignore_socks 198 200 64 63 67
+sock_end
+
+sock_start 67
+	cam_blend_time 2.75
+	ignore_socks 198 200
+sock_end
+
+sock_start 68
+	cam_blend_time 4.25
+	ignore_socks 198 200 67
+sock_end
+
+sock_start 69
+	cam_blend_time 1.5
+sock_end
+
+sock_start 70
+	cam_blend_time 1.5
+sock_end
+
+sock_start 71
+	cam_blend_time 3.25
+	//offset_blend_y_ratio 0.0
+sock_end
+
+sock_start 72
+	cam_blend_time 1.25
+	ignore_socks 71 79
+sock_end
+
+sock_start 73
+	cam_blend_time 1.5
+sock_end
+
+sock_start 74
+	cam_blend_time 1.5
+	ignore_socks 73 75
+sock_end
+
+sock_start 75
+	cam_blend_time 1.5
+	ignore_socks 73 74 
+sock_end
+
+sock_start 76
+	cam_blend_time 1.5
+	ignore_socks 74
+sock_end
+
+sock_start 77
+	cam_blend_time 2.25
+	ignore_socks 76
+sock_end
+
+sock_start 78
+	cam_blend_time 3.25
+	ignore_socks 76 79 71
+sock_end
+
+sock_start 79
+	cam_blend_time 3.25
+	ignore_socks 76
+sock_end
+
+sock_start 80
+	cam_blend_time 1
+	ignore_socks 70
+sock_end
+
+sock_start 81
+	cam_blend_time 2
+	ignore_socks 70 80
+sock_end
+
+sock_start 82
+	cam_blend_time 2.25
+	ignore_socks 103
+sock_end
+
+sock_start 83
+	cam_blend_time 2.25
+	ignore_socks 84
+sock_end
+
+sock_start 84
+	cam_blend_time 2.25
+	ignore_socks 85
+sock_end
+
+sock_start 85
+	cam_blend_time 2.25
+	ignore_socks 86
+sock_end
+
+sock_start 86
+	cam_blend_time 2.25
+	ignore_socks 85
+sock_end
+
+sock_start 87
+	cam_blend_time 2.25
+	ignore_socks 88
+sock_end
+
+sock_start 88
+	cam_blend_time 2.25
+	ignore_socks 88
+sock_end
+
+sock_start 89
+	cam_blend_time 2.25
+	ignore_socks 88
+sock_end
+
+sock_start 90
+	cam_blend_time 2.25
+	ignore_socks 89
+sock_end
+
+sock_start 91
+	cam_blend_time 1.0
+	ignore_socks 92
+sock_end
+
+sock_start 92
+	cam_blend_time 2.5
+	ignore_socks 90
+sock_end
+
+sock_start 93
+	cam_blend_time 3.25
+	ignore_socks 91 294
+sock_end
+
+sock_start 94
+	cam_blend_time 1.0
+sock_end
+
+sock_start 95
+	cam_blend_time 1.0
+sock_end
+
+sock_start 96
+	cam_blend_time 1.0
+sock_end
+
+sock_start 97
+	cam_blend_time 1.0
+	ignore_socks 96
+sock_end
+
+sock_start 98
+	cam_blend_time 1.0
+	ignore_socks 95
+sock_end
+
+sock_start 99
+	cam_blend_time 1.0
+	ignore_socks 95
+sock_end
+
+//sock_start 100
+//	cam_blend_time 1.0
+//	campos_seek 5.0
+//	cam_x_offset -1.6
+//	cam_y_offset 1.4
+//	cam_z_offset 2.2
+//	offset_blend_x_ratio 1.0
+//	offset_blend_y_ratio 1.0
+//	offset_blend_z_ratio 1.0
+//	cam_pullback_ratio_xz 0.5
+//	cam_look_ratio_y 0.935
+//sock_end
+
+sock_start 101
+	cam_blend_time 1.3
+	ignore_socks 60 61
+//	cam_blend_time 1.0
+//	campos_seek 5.0
+//	cam_x_offset 0.2
+//	cam_y_offset 1.6
+//	cam_z_offset 2.4
+//	offset_blend_x_ratio 1.0
+//	offset_blend_y_ratio 1.0
+//	offset_blend_z_ratio 1.0
+//	cam_pullback_ratio_xz 0.5
+//	cam_look_ratio_y 0.935
+sock_end
+
+sock_start 102
+	cam_blend_time 1.0
+	campos_seek 5.0
+	//cam_x_offset -2.5
+	//cam_y_offset 1.2
+	//cam_z_offset -3.0
+	offset_blend_x_ratio 1.0
+	offset_blend_y_ratio 1.0
+	offset_blend_z_ratio 1.0
+	//cam_pullback_ratio_xz 0.5
+	//cam_look_ratio_y 0.935
+	ignore_socks 83	
+sock_end
+
+sock_start 103
+	cam_blend_time 1.0
+	campos_seek 5.0
+	cam_x_offset -3.0
+	cam_y_offset 1.8
+	cam_z_offset -1.8
+	offset_blend_x_ratio 1.0
+	offset_blend_y_ratio 1.0
+	offset_blend_z_ratio 1.0
+	cam_pullback_ratio_xz 0.5
+	cam_look_ratio_y 0.935
+sock_end
+
+sock_start 104
+	cam_blend_time 1.0
+	campos_seek 5.0
+	cam_x_offset -3.0
+	cam_y_offset 1.8
+	cam_z_offset -1.8
+	offset_blend_x_ratio 1.0
+	offset_blend_y_ratio 1.0
+	offset_blend_z_ratio 1.0
+	cam_pullback_ratio_xz 0.5
+	cam_look_ratio_y 0.935
+sock_end
+
+sock_start 105
+	cam_blend_time 1.0
+	campos_seek 5.0
+	cam_x_offset -3.0
+	cam_y_offset 1.8
+	cam_z_offset -0.5
+	offset_blend_x_ratio 1.0
+	offset_blend_y_ratio 1.0
+	offset_blend_z_ratio 1.0
+	cam_pullback_ratio_xz 0.5
+	cam_look_ratio_y 0.935
+sock_end
+
+sock_start 106
+	cam_blend_time 1.0
+	campos_seek 5.0
+	cam_x_offset -3.0
+	cam_y_offset 1.8
+	cam_z_offset -1.2
+	offset_blend_x_ratio 1.0
+	offset_blend_y_ratio 1.0
+	offset_blend_z_ratio 1.0
+	cam_pullback_ratio_xz 0.5
+	cam_look_ratio_y 0.935
+sock_end
+
+sock_start 107
+	cam_blend_time 2.0
+	campos_seek 5.0
+	cam_x_offset -2.0
+	cam_y_offset 1.8
+	cam_z_offset -1.5
+	offset_blend_x_ratio 1.0
+	offset_blend_y_ratio 1.0
+	offset_blend_z_ratio 1.0
+	cam_pullback_ratio_xz 0.5
+	cam_look_ratio_y 0.935
+sock_end
+
+sock_start 108
+	cam_blend_time 1.0
+	campos_seek 5.0
+	//cam_x_offset -2.5
+	//cam_y_offset 1.8
+	//cam_z_offset -2.8
+	//offset_blend_x_ratio 1.0
+	//offset_blend_y_ratio 1.0
+	//offset_blend_z_ratio 1.0
+	cam_pullback_ratio_xz 0.5
+	cam_look_ratio_y 0.935
+sock_end
+
+sock_start 109
+	cam_blend_time 1.0
+	campos_seek 5.0
+	cam_x_offset -2.8
+	cam_y_offset 1.2
+	cam_z_offset -1.0
+	offset_blend_x_ratio 1.0
+	offset_blend_y_ratio 1.0
+	offset_blend_z_ratio 1.0
+	cam_pullback_ratio_xz 0.5
+	cam_look_ratio_y 0.935
+sock_end
+
+sock_start 110
+	cam_blend_time 1.0
+	campos_seek 5.0
+	//cam_x_offset 3.2
+	//cam_y_offset 2.0
+	//cam_z_offset -1.0
+	//offset_blend_x_ratio 1.0
+	//offset_blend_y_ratio 1.0
+	//offset_blend_z_ratio 1.0
+	cam_pullback_ratio_xz 0.5
+	cam_look_ratio_y 0.935
+sock_end
+
+sock_start 111
+	cam_blend_time 1.0
+	campos_seek 5.0
+	cam_x_offset -4.2
+	cam_y_offset 1.8
+	cam_z_offset 1.0
+	offset_blend_x_ratio 1.0
+	offset_blend_y_ratio 1.0
+	offset_blend_z_ratio 1.0
+	cam_pullback_ratio_xz 0.5
+	cam_look_ratio_y 0.935
+sock_end
+
+sock_start 112
+	cam_blend_time 1.0
+	campos_seek 5.0
+	//cam_x_offset 2.2
+	//cam_y_offset 1.8
+	//cam_z_offset -2.2
+	cam_x_offset 2.75
+	cam_y_offset 2.25
+	cam_z_offset -2.75
+	offset_blend_x_ratio 1.0
+	offset_blend_y_ratio 1.0
+	offset_blend_z_ratio 1.0
+	cam_pullback_ratio_xz 0.5
+	cam_look_ratio_y 0.935
+sock_end
+
+sock_start 113
+	cam_blend_time 1.0
+	ignore_socks 250
+	campos_seek 5.0
+	cam_x_offset 4
+	cam_y_offset 1.8
+	cam_z_offset 0.0
+	offset_blend_x_ratio 1.0
+	offset_blend_y_ratio 1.0
+	offset_blend_z_ratio 1.0
+	cam_pullback_ratio_xz 0.5
+	cam_look_ratio_y 0.935
+sock_end
+
+sock_start 114
+	cam_blend_time 1.5
+	ignore_socks 113 298
+	//campos_seek 5.0
+	//cam_x_offset 3.8
+	//cam_y_offset 1.8
+	//cam_z_offset -0.5
+	//offset_blend_x_ratio 1.0
+	//offset_blend_y_ratio 1.0
+	//offset_blend_z_ratio 1.0
+	//cam_pullback_ratio_xz 0.5
+	//cam_look_ratio_y 0.935
+sock_end
+
+sock_start 115
+	cam_blend_time 1.0
+	//campos_seek 5.0
+	//cam_x_offset 2.2
+	//cam_y_offset 1.8
+	//cam_z_offset -0.5
+	//offset_blend_x_ratio 1.0
+	//offset_blend_y_ratio 1.0
+	//offset_blend_z_ratio 1.0
+	//cam_pullback_ratio_xz 0.5
+	//cam_look_ratio_y 0.935
+sock_end
+
+sock_start 116
+	cam_blend_time 1.0
+	campos_seek 5.0
+	cam_x_offset -4.2
+	cam_y_offset 0.8
+	cam_z_offset -1.8
+	offset_blend_x_ratio 1.0
+	offset_blend_y_ratio 1.0
+	offset_blend_z_ratio 1.0
+	cam_pullback_ratio_xz 0.5
+	cam_look_ratio_y 0.935
+sock_end
+
+sock_start 117
+	cam_blend_time 1.0
+	campos_seek 5.0
+	cam_x_offset -3.2
+	cam_y_offset 1.4
+	cam_z_offset -0.8
+	offset_blend_x_ratio 1.0
+	offset_blend_y_ratio 1.0
+	offset_blend_z_ratio 1.0
+	cam_pullback_ratio_xz 0.5
+	cam_look_ratio_y 0.935
+sock_end
+
+sock_start 118
+	cam_blend_time 1.0
+	campos_seek 5.0
+	cam_x_offset -2.2
+	cam_y_offset 1.2
+	cam_z_offset -1.8
+	offset_blend_x_ratio 1.0
+	offset_blend_y_ratio 1.0
+	offset_blend_z_ratio 1.0
+	cam_pullback_ratio_xz 0.5
+	cam_look_ratio_y 0.935
+sock_end
+
+sock_start 119
+	cam_blend_time 1.0
+	campos_seek 5.0
+	cam_x_offset -0.0
+	cam_y_offset 1.8
+	cam_z_offset -3.0
+	offset_blend_x_ratio 1.0
+	offset_blend_y_ratio 1.0
+	offset_blend_z_ratio 1.0
+	cam_pullback_ratio_xz 0.5
+	cam_look_ratio_y 0.935
+sock_end
+
+sock_start 120
+	cam_blend_time 1.0
+	campos_seek 5.0
+	cam_x_offset -3.2
+	cam_y_offset 1.8
+	cam_z_offset -0.5
+	offset_blend_x_ratio 1.0
+	offset_blend_y_ratio 1.0
+	offset_blend_z_ratio 1.0
+	cam_pullback_ratio_xz 0.5
+	cam_look_ratio_y 0.935
+sock_end
+
+sock_start 121
+	cam_blend_time 1.0
+	campos_seek 5.0
+	cam_x_offset -2.0
+	cam_y_offset 2.2
+	cam_z_offset 1.5
+	offset_blend_x_ratio 1.0
+	offset_blend_y_ratio 1.0
+	offset_blend_z_ratio 1.0
+	cam_pullback_ratio_xz 0.5
+	cam_look_ratio_y 0.935
+sock_end
+
+sock_start 122
+	cam_blend_time 2.1
+	ignore_socks 291 269
+	//campos_seek 5.0
+	//cam_x_offset 3.2
+	//cam_y_offset 1.6
+	//cam_z_offset 0.2
+	//offset_blend_x_ratio 1.0
+	//offset_blend_y_ratio 1.0
+	//offset_blend_z_ratio 1.0
+	//cam_pullback_ratio_xz 0.5
+	//cam_look_ratio_y 0.935
+sock_end
+
+sock_start 123
+	cam_blend_time 1.0
+	//campos_seek 5.0
+	//cam_x_offset -1.2
+	//cam_y_offset 1.8
+	//cam_z_offset -2.8
+	//offset_blend_x_ratio 1.0
+	//offset_blend_y_ratio 1.0
+	//offset_blend_z_ratio 1.0
+	//cam_pullback_ratio_xz 0.5
+	//cam_look_ratio_y 0.935
+sock_end
+
+sock_start 124
+	cam_blend_time 1.0
+	campos_seek 5.0
+	cam_x_offset -3.2
+	cam_y_offset 1.4
+	cam_z_offset -0.5
+	offset_blend_x_ratio 1.0
+	offset_blend_y_ratio 1.0
+	offset_blend_z_ratio 1.0
+	cam_pullback_ratio_xz 0.5
+	cam_look_ratio_y 0.935
+sock_end
+
+sock_start 125
+	cam_blend_time 2.0
+	campos_seek 5.0
+	cam_x_offset -2.0
+	cam_y_offset 1.8
+	cam_z_offset -1.5
+	offset_blend_x_ratio 1.0
+	offset_blend_y_ratio 1.0
+	offset_blend_z_ratio 1.0
+	cam_pullback_ratio_xz 0.5
+	cam_look_ratio_y 0.935
+sock_end
+
+sock_start 126
+	cam_blend_time 1.0
+	campos_seek 5.0
+	//cam_x_offset -1.2
+	cam_y_offset 1.8
+	//cam_z_offset -2.8
+	//offset_blend_x_ratio 1.0
+	//offset_blend_y_ratio 1.0
+	//offset_blend_z_ratio 1.0
+	cam_pullback_ratio_xz 0.5
+	cam_look_ratio_y 0.935
+sock_end
+
+sock_start 127
+	cam_blend_time 1.0
+	campos_seek 5.0
+	cam_x_offset 2.2
+	cam_y_offset 1.8
+	cam_z_offset -1.0
+	offset_blend_x_ratio 1.0
+	offset_blend_y_ratio 1.0
+	offset_blend_z_ratio 1.0
+	cam_pullback_ratio_xz 0.5
+	cam_look_ratio_y 0.935
+sock_end
+
+sock_start 128
+	cam_blend_time 1.0
+	campos_seek 5.0
+	cam_x_offset 4.2
+	cam_y_offset 1.8
+	cam_z_offset -0.0
+	offset_blend_x_ratio 1.0
+	offset_blend_y_ratio 1.0
+	offset_blend_z_ratio 1.0
+	cam_pullback_ratio_xz 0.5
+	cam_look_ratio_y 0.935
+sock_end
+
+
+sock_start 129
+	cam_blend_time 1.0
+	campos_seek 5.0
+	cam_x_offset -2.5
+	cam_y_offset 3.0
+	cam_z_offset -2.0
+	offset_blend_x_ratio 1.0
+	offset_blend_y_ratio 1.0
+	offset_blend_z_ratio 1.0
+	cam_pullback_ratio_xz 0.5
+	cam_look_ratio_y 0.935
+sock_end
+
+sock_start 130
+	cam_blend_time 2.0
+//	campos_seek 5.0
+//	cam_x_offset 3.8
+//	cam_y_offset 1.2
+//	cam_z_offset -3.5
+//	offset_blend_x_ratio 1.0
+//	offset_blend_y_ratio 1.0
+//	offset_blend_z_ratio 1.0
+//	cam_pullback_ratio_xz 0.5
+//	cam_look_ratio_y 0.935
+	ignore_socks 01 62 61 60 101 
+sock_end
+
+sock_start 131
+	cam_blend_time 2.25
+//	campos_seek 5.0
+//	cam_x_offset -0.8
+//	cam_y_offset 3.4
+//	cam_z_offset 2.4
+//	offset_blend_x_ratio 1.0
+//	offset_blend_y_ratio 1.0
+//	offset_blend_z_ratio 1.0
+//	cam_pullback_ratio_xz 0.5
+//	cam_look_ratio_y 0.935
+    ignore_socks 01 62 61 60 101 130
+sock_end
+
+sock_start 134
+	cam_blend_time 1.0
+	campos_seek 5.0
+	cam_x_offset -2.8
+	cam_y_offset 1.2
+	cam_z_offset -1.0
+	offset_blend_x_ratio 1.0
+	offset_blend_y_ratio 1.0
+	offset_blend_z_ratio 1.0
+	cam_pullback_ratio_xz 0.5
+	cam_look_ratio_y 0.935
+sock_end
+
+//sock_start 135
+//	cam_blend_time 1.0
+//	campos_seek 5.0
+//	cam_x_offset 2.5
+//	cam_y_offset 1.6
+//	cam_z_offset 2.2
+//	offset_blend_x_ratio 1.0
+//	offset_blend_y_ratio 1.0
+//	offset_blend_z_ratio 1.0
+//	cam_pullback_ratio_xz 0.5
+//	cam_look_ratio_y 0.935
+//sock_end
+
+sock_start 136
+	cam_blend_time 1.0
+	campos_seek 5.0
+	cam_x_offset 2.8
+	cam_y_offset 1.8
+	cam_z_offset -2
+	offset_blend_x_ratio 1.0
+	offset_blend_y_ratio 1.0
+	offset_blend_z_ratio 1.0
+	cam_pullback_ratio_xz 0.5
+	cam_look_ratio_y 0.935
+sock_end
+
+sock_start 137
+	cam_blend_time 1.0
+	campos_seek 5.0
+	cam_x_offset -2.5
+	cam_y_offset 2.6
+	cam_z_offset -0.5
+	offset_blend_x_ratio 1.0
+	offset_blend_y_ratio 1.0
+	offset_blend_z_ratio 1.0
+	cam_pullback_ratio_xz 0.5
+	cam_look_ratio_y 0.935
+sock_end
+
+sock_start 138
+	cam_blend_time 3.0
+	campos_seek 5.0
+	cam_x_offset 2.5
+	cam_y_offset 1.8
+	cam_z_offset 1.8
+	offset_blend_x_ratio 1.0
+	offset_blend_y_ratio 1.0
+	offset_blend_z_ratio 1.0
+	cam_pullback_ratio_xz 0.5
+	cam_look_ratio_y 0.935
+sock_end
+
+sock_start 139
+	cam_blend_time 3.0
+	campos_seek 5.0
+	cam_x_offset -2.8
+	cam_y_offset 0.5
+	cam_z_offset -2.0
+	offset_blend_x_ratio 1.0
+	offset_blend_y_ratio 1.0
+	offset_blend_z_ratio 1.0
+	cam_pullback_ratio_xz 0.5
+	cam_look_ratio_y 0.935
+sock_end
+
+sock_start 140
+	cam_blend_time 1.0
+	campos_seek 5.0
+	cam_x_offset 0
+	cam_y_offset 4.0
+	cam_z_offset -3.5
+	offset_blend_x_ratio 1.0
+	offset_blend_y_ratio 1.0
+	offset_blend_z_ratio 1.0
+	cam_pullback_ratio_xz 0.5
+	cam_look_ratio_y 0.935
+sock_end
+
+sock_start 141
+	cam_blend_time 1.5
+	campos_seek 5.0
+	cam_x_offset -2.5
+	cam_y_offset 2.2
+	cam_z_offset 2.8
+	offset_blend_x_ratio 1.0
+	offset_blend_y_ratio 1.0
+	offset_blend_z_ratio 1.0
+	cam_pullback_ratio_xz 0.5
+	cam_look_ratio_y 0.935
+sock_end
+
+sock_start 142
+	cam_blend_time 1.0
+	campos_seek 5.0
+	cam_x_offset -3.2
+	cam_y_offset 1.9
+	cam_z_offset -0.
+	offset_blend_x_ratio 1.0
+	offset_blend_y_ratio 1.0
+	offset_blend_z_ratio 1.0
+	cam_pullback_ratio_xz 0.5
+	cam_look_ratio_y 0.935
+sock_end
+
+sock_start 143
+	cam_blend_time 1.0
+	campos_seek 5.0
+	cam_x_offset -3.2
+	cam_y_offset 2.4
+	cam_z_offset -0.5
+	offset_blend_x_ratio 1.0
+	offset_blend_y_ratio 1.0
+	offset_blend_z_ratio 1.0
+	cam_pullback_ratio_xz 0.5
+	cam_look_ratio_y 0.935
+sock_end
+
+sock_start 144
+	cam_blend_time 1.0
+	campos_seek 5.0
+	cam_x_offset 3.2
+	cam_y_offset 1.8
+	cam_z_offset 0.0
+	offset_blend_x_ratio 1.0
+	offset_blend_y_ratio 1.0
+	offset_blend_z_ratio 1.0
+	cam_pullback_ratio_xz 0.5
+	cam_look_ratio_y 0.935
+sock_end
+
+sock_start 145
+	cam_blend_time 1.0
+	ignore_socks 115
+	//campos_seek 5.0
+	//cam_x_offset 3.2
+	//cam_y_offset 1.8
+	//cam_z_offset -1
+	//offset_blend_x_ratio 1.0
+	//offset_blend_y_ratio 1.0
+	//offset_blend_z_ratio 1.0
+	//cam_pullback_ratio_xz 0.5
+	//cam_look_ratio_y 0.935
+sock_end
+
+sock_start 196
+	cam_blend_time 1.0
+	ignore_socks 197
+//	campos_seek 5.0
+//	cam_x_offset -1.9
+//	cam_y_offset 1.2
+//	cam_z_offset -1.9
+//	offset_blend_x_ratio 1.0
+//	offset_blend_y_ratio 1.0
+//	offset_blend_z_ratio 1.0
+//	cam_pullback_ratio_xz 0.5
+//	cam_look_ratio_y 0.935
+sock_end
+
+sock_start 197
+	cam_blend_time 1.0
+	ignore_socks 198
+//	campos_seek 5.0
+//	cam_x_offset -3.0
+//	cam_y_offset 1.8
+//	cam_z_offset -1.5
+//	offset_blend_x_ratio 1.0
+//	offset_blend_y_ratio 1.0
+//	offset_blend_z_ratio 1.0
+//	cam_pullback_ratio_xz 0.5
+//	cam_look_ratio_y 0.935
+sock_end
+
+sock_start 198
+	cam_blend_time 1.5
+//	campos_seek 5.0
+//	cam_x_offset -0.8
+//	cam_y_offset 1.2
+//	cam_z_offset 3.0
+//	offset_blend_x_ratio 1.0
+//	offset_blend_y_ratio 1.0
+//	offset_blend_z_ratio 1.0
+//	cam_pullback_ratio_xz 0.5
+//	cam_look_ratio_y 0.935
+sock_end
+
+sock_start 199
+	cam_blend_time 1.5
+	ignore_socks 198 60 243 200
+	cam_look_ratio_y 0.925
+sock_end
+
+
+
+
+sock_start 200
+	cam_blend_time 1.0
+	campos_seek 5.0
+	cam_x_offset -3.0
+	cam_y_offset 2.6
+	cam_z_offset 0.5
+	offset_blend_x_ratio 1.0
+	offset_blend_y_ratio 1.0
+	offset_blend_z_ratio 1.0
+	cam_pullback_ratio_xz 0.5
+	cam_look_ratio_y 0.935
+sock_end
+
+sock_start 242
+	JBSock 1
+	JBGetHeight 1
+sock_end
+
+sock_start 243
+	JBSock 1
+	JBGetHeight 1
+sock_end
+
+sock_start 244
+	JBSock 1
+sock_end
+
+sock_start 245
+	JBSock 1
+sock_end
+
+sock_start 246
+	JBSock 1
+sock_end
+
+sock_start 247
+	JBSock 1
+	ignore_socks 248
+sock_end
+
+sock_start 248
+	JBSock 1
+sock_end
+
+sock_start 249
+	JBSock 1
+sock_end
+
+sock_start 250
+	JBSock 1																																					
+sock_end
+
+sock_start 251
+	JBSock 1
+sock_end
+
+sock_start 252
+	JBSock 1
+sock_end
+
+sock_start 253
+	JBSock 1
+sock_end
+
+sock_start 254
+	JBSock 1
+sock_end
+
+sock_start 255
+	JBSock 1
+sock_end
+	
+sock_start 256
+	JBSock 1
+	JBAffectsVehicles 1
+	ignore_socks 264 272
+sock_end
+
+sock_start 257
+	JBSock 1
+	JBGetHeight 1
+sock_end
+
+sock_start 258
+	JBSock 1
+sock_end
+
+sock_start 259
+	JBSock 1
+	JBGetHeight 1
+sock_end
+
+sock_start 260
+	JBSock 1
+sock_end
+
+// Winding S street, SF_Residential
+sock_start 261
+	JBSock 1
+	JBTgtVelSampleSize 0
+	JBAffectsVehicles 1
+	JBGetHeight 1
+sock_end
+
+sock_start 262
+	JBSock 1
+sock_end
+
+sock_start 263
+	JBSock 1
+sock_end
+
+sock_start 264
+	JBSock 1
+sock_end
+
+sock_start 265
+	JBSock 1
+sock_end
+
+sock_start 266
+	JBSock 1
+sock_end
+
+sock_start 267
+	JBSock 1
+	JBGetHeight 1
+sock_end
+
+sock_start 268
+	JBSock 1
+	JBGetHeight 1
+sock_end
+
+sock_start 269
+	JBSock 1
+	JBGetHeight 1
+sock_end
+
+sock_start 270
+	JBSock 1
+	JBGetHeight 1
+sock_end
+
+// SF_Residential Radio tower ramp / jump
+sock_start 271
+	JBSock 1
+	JBAffectsVehicles 1
+sock_end
+
+sock_start 272
+	JBSock 1
+	JBAffectsVehicles 1
+	ignore_socks 264
+sock_end
+
+sock_start 273
+	JBSock 1
+	JBAffectsVehicles 1
+	ignore_socks 272
+sock_end
+
+sock_start 274
+	JBSock 1
+	JBGetHeight 1
+sock_end
+
+sock_start 275
+	JBSock 1
+	JBGetHeight 1
+sock_end
+
+sock_start 276
+	JBSock 1
+	JBGetHeight 1
+sock_end
+
+sock_start 277
+	JBSock 1
+	JBGetHeight 1
+sock_end
+
+sock_start 278
+	JBSock 1
+	JBGetHeight 1
+sock_end
+
+sock_start 279
+	JBSock 1
+	JBGetHeight 1
+sock_end
+
+sock_start 280
+	JBSock 1
+	JBGetHeight 1
+sock_end
+
+sock_start 281
+	JBSock 1
+	JBGetHeight 1
+sock_end
+
+sock_start 282
+	JBSock 1
+	JBGetHeight 1
+sock_end
+
+sock_start 283
+	cam_blend_time 2.25
+	ignore_socks 97 98 	
+sock_end
+
+sock_start 284
+	cam_blend_time 2.25
+	ignore_socks 96 283 288
+sock_end
+
+sock_start 285
+	cam_blend_time 0.75
+	ignore_socks 96 283
+sock_end
+
+sock_start 286
+	cam_blend_time 2.25
+	ignore_socks 96 287 283
+sock_end
+
+sock_start 287
+	cam_blend_time 2.25
+	ignore_socks 96
+sock_end
+
+sock_start 288
+	cam_blend_time 2.25
+	ignore_socks 96 95 289 283 
+sock_end
+
+sock_start 289
+	cam_blend_time 2.25
+	ignore_socks 99
+sock_end
+
+sock_start 290
+	cam_blend_time 2
+	ignfore_socks 99
+	cam_look_ratio_y 0.55
+sock_end
+
+sock_start 291
+	cam_blend_time 2
+	ignore_socks 122 269 293
+sock_end
+
+sock_start 292
+	cam_blend_time 2
+	ignore_socks 291 293
+sock_end
+
+sock_start 292
+	cam_blend_time 2
+sock_end
+
+sock_start 293
+	cam_blend_time 2
+sock_end
+
+sock_start 294
+	cam_blend_time 1.5
+sock_end
+
+// Train station roof
+sock_start 295
+	JBSock 1
+	JBGetHeight 1
+sock_end
+
+sock_start 296
+	cam_blend_time 1.5
+	ignore_socks 70 80 81
+sock_end
+
+sock_start 297
+	cam_blend_time 1.0
+	ignore_socks 112
+	campos_seek 5.0
+	//cam_x_offset 2.2
+	//cam_y_offset 1.8
+	//cam_z_offset -2.2
+	cam_x_offset 2.75
+	cam_y_offset 2.25
+	cam_z_offset -1.375
+	offset_blend_x_ratio 1.0
+	offset_blend_y_ratio 1.0
+	offset_blend_z_ratio 1.0
+	cam_pullback_ratio_xz 0.5
+	cam_look_ratio_y 0.935
+sock_end
+
+sock_start 298
+	cam_blend_time 1.5
+	ignore_socks 250
+	campos_seek 5.0
+	cam_x_offset 4
+	cam_y_offset 1.8
+	cam_z_offset 0.0
+	offset_blend_x_ratio 1.0
+	offset_blend_y_ratio 1.0
+	offset_blend_z_ratio 0.0
+	cam_pullback_ratio_xz 0.5
+	cam_look_ratio_y 0.935
+sock_end
+
+sock_start 299
+	cam_blend_time 1.5
+	ignore_socks 250 122 123 300
+	campos_seek 5.0
+	cam_y_offset 1.8
+	offset_blend_x_ratio 0.0
+	offset_blend_y_ratio 1.0
+	offset_blend_z_ratio 0.0
+	cam_pullback_ratio_xz 0.5
+	cam_look_ratio_y 0.935
+sock_end
+
+sock_start 300
+	cam_blend_time 2.1
+	ignore_socks 250 269
+	campos_seek 5.0
+	cam_x_offset 4
+	cam_y_offset 1.8
+	cam_z_offset 0.0
+	offset_blend_x_ratio 1.0
+	offset_blend_y_ratio 1.0
+	offset_blend_z_ratio 0.0
+	cam_pullback_ratio_xz 0.5
+	cam_look_ratio_y 0.935
+sock_end

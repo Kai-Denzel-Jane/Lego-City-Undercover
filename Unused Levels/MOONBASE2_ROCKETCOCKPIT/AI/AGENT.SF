@@ -1,0 +1,45 @@
+Character me(GetCharacter());
+
+Global Character cPlayer1;
+Global Character cPlayer2;
+
+Number nMaxDistance(6);
+
+State Base()
+{	
+	Conditions
+	{
+		if ( me.OnScreen()  AND  ( me.DistanceToXZ(cPlayer1) < nMaxDistance  OR  me.DistanceToXZ(cPlayer2) < nMaxDistance ) )
+		{
+			goto Fight();
+		};
+	};
+	Actions
+	{
+		_SetSide("'Baddie'");	
+	};
+};
+
+State Fight()
+{
+	Conditions
+	{
+		
+	};
+	Actions
+	{
+		_PutAwayCurrentItem("");
+//		_SetZoneAbility("clear +base +B +A");
+		_SetOpponent("'opponent=nearest_player'");
+
+		me.SetPushable(false);
+		
+		_CanUseWeapon("'FALSE'");
+		_SetUseOneAtOnce("'True'");
+		//_ForcePlayerRecoil("");
+		me.Attack(cPlayer1);
+		
+	};
+};
+
+Base();

@@ -1,0 +1,208 @@
+Character cPlayer1("player1");
+Character cRobber;
+Character cRobber1;
+Character cRobber2;
+Character cRobber3;
+Character cRobber4;
+Character cRobber5;
+Character cRobber6;
+Character cRobber7;
+Character cRobber8;
+Character cRobber9;
+Character cRobber10;
+AttackManager cAM;
+AttackManager cAM2;
+//Area in1("inner1");
+//Area in2("inner2");
+//Area out1("outer1");
+//Area out2("outer2");
+//Locator L1("L1");
+//Locator L2("L2");
+//Locator LM("LM");
+bool needToCheck( true );
+
+State Start()
+{
+	Conditions
+	{
+//		if ( ! cAM2 )
+//		{
+//			if ( cAM )
+//			{ 
+//				if ( cAM.IsSuspended() )
+//				{ 
+//					cAM.Resume();
+//				}
+//			}
+//		}
+	};	
+
+	Actions
+	{
+//		cRobber1 = CreateAICharacter("StrongMan", "MartialArtist", cPlayer1);	
+//		cRobber2 = CreateAICharacter("WhiteBelt", "MartialArtist", cPlayer1);	
+//		cAM = CreateAttackManager( "TestAM", cPlayer1 ); 
+//		cAM.SetInnerCentreAndRadius( "1", cPlayer1, 1.5  );
+//		cAM.SetOuterCentreAndRadius( "1", cPlayer1, 3.0  );
+//		cAM.FinishAreaDefinition();
+//		cAM.AddAttacker( cRobber1 );
+//		cAM.Finish();
+//		cAM.AutoSuspend( cPlayer1, 4.0 );
+
+//		cAM2 = CreateAttackManager( "TestAM", cPlayer1 ); 
+//		cAM2.SetInnerCentreAndRadius( "1", cPlayer1, 1.5  );
+//		cAM2.SetOuterCentreAndRadius( "1", cPlayer1, 3.0  );
+//		cAM2.FinishAreaDefinition();
+//		cAM2.AddAttacker( cRobber2 );
+//		cAM2.Finish();
+	
+//		cRobber1 = CreateAICharacter("WhiteBelt", "MartialArtist", L1);	
+//		cRobber2 = CreateAICharacter("WhiteBelt", "MartialArtist", L1);	
+//		cRobber3 = CreateAICharacter("WhiteBelt", "MartialArtist", L2);	
+//		cRobber4 = CreateAICharacter("WhiteBelt", "MartialArtist", L2);	
+//		cRobber5 = CreateAICharacter("WhiteBelt", "MartialArtist", L1);	
+//		cRobber6 = CreateAICharacter("WhiteBelt", "MartialArtist", L1);	
+//		cAM = CreateAttackManager( "TestAM", cPlayer1 ); 
+//		cAM.AddInnerArea( "1", in1 );
+//		cAM.AddOuterArea( "1", out1 );
+//		cAM.AddInnerArea( "2", in2 );
+//		cAM.AddOuterArea( "2", out2 );
+//		cAM.SetInnerCentreAndRadius( "1", L1, 1.5  );
+//		cAM.SetOuterCentreAndRadius( "1", L1, 3.0  );
+//		cAM.SetInnerCentreAndRadius( "2", L2, 1.5  );
+//		cAM.SetOuterCentreAndRadius( "2", L2, 3.0  );
+//		cAM.FinishAreaDefinition();
+		
+//		cAM.AddAttacker( cRobber1 );
+//		cAM.AddAttacker( cRobber2 );
+//		cAM.AddAttacker( cRobber3 );
+//		cAM.AddAttacker( cRobber4 );
+//		cAM.Finish();
+//		cRobber1 = CreateAICharacter("WhiteBelt", "MartialArtist", cPlayer1);	
+//		cRobber2 = CreateAICharacter("WhiteBelt", "MartialArtist", cPlayer1);	
+//		cRobber3 = CreateAICharacter("WhiteBelt", "MartialArtist", cPlayer1);	
+//		cRobber4 = CreateAICharacter("WhiteBelt", "MartialArtist", cPlayer1);	
+//		cRobber5 = CreateAICharacter("WhiteBelt", "MartialArtist", cPlayer1);	
+//		cRobber6 = CreateAICharacter("WhiteBelt", "MartialArtist", cPlayer1);	
+//		cRobber7 = CreateAICharacter("WhiteBelt", "MartialArtist", cPlayer1);	
+//		cRobber8 = CreateAICharacter("WhiteBelt", "MartialArtist", cPlayer1);	
+//		cRobber9 = CreateAICharacter("WhiteBelt", "MartialArtist", cPlayer1);	
+//		cRobber10 = CreateAICharacter("WhiteBelt", "MartialArtist", cPlayer1);	
+//		cRobber2 = CreateAICharacter("StrongMan", "MartialArtist", cPlayer1);	
+//		cRobber2 = CreateAICharacter("WhiteBelt", "MartialArtist", cPlayer1);	
+				
+		goto Base();
+	}
+
+}
+
+State Base()
+{
+	
+	Conditions	
+	{
+		if ( PlayerPressedButton("Y") )
+		{
+			if ( cRobber )
+			{
+			  cRobber.Kill();			
+			}
+			cRobber = CreateAICharacter("Robber", "Criminal", cPlayer1);			
+			cRobber.Teleport( cPlayer1 );
+//			if( cRobber )
+//			{
+//				cRobber.MoveToSetSpeed( 0.5, #FORCEFLATPACE );
+//			}
+
+		};	
+		if ( PlayerPressedButton("X") )
+		{
+			if ( ! cRobber )
+			{
+				cRobber = CreateAICharacter("Robber", "Criminal", cPlayer1);	
+			}
+			cRobber.MoveTo( cPlayer1, 1.6 );
+//			cRobber.FollowCharacter( cPlayer1, .3, 1.6 );
+		};	
+
+//		if ( PlayerPressedButton("A") )
+//		{
+//		
+//		
+//			if ( ! cRobber )
+//			{
+//				cRobber = CreateAICharacter("WhiteBelt", "MartialArtist", L1);	 // CreateAICharacter("StrongMan", "MartialArtist", L1);
+//				cRobber.Attack(cPlayer1);
+//
+//			}
+//		};	
+
+//	
+//		if ( PlayerPressedButton("X") )
+//		{
+//			SlowMo( 3, 0.2 );
+//		};	
+
+//		if ( cRobber )
+//		{		
+//			goto HaveRobber();
+//		}
+//		
+//		if (needtocheck)
+//		{
+//			printtoscreen("false");
+//		}
+//		else
+//		{
+//			printtoscreen("false");
+//		}
+	
+	};
+	Actions
+	{
+		
+//		cRobber1.Attack(cPlayer1);
+//		cRobber2.Attack(cPlayer1);
+//		cRobber3.Attack(cPlayer1);
+//		cRobber4.Attack(cPlayer1);
+//		cRobber5.Attack(cPlayer1);
+//		cRobber6.Attack(cPlayer1);
+//		cRobber7.Attack(cPlayer1);
+//		cRobber8.Attack(cPlayer1);
+//		cRobber9.Attack(cPlayer1);
+//		cRobber10.Attack(cPlayer1);
+
+//		cRobber1.FollowCharacter(cPlayer1);
+//		cRobber2.FollowCharacter(cPlayer1);
+//		cRobber3.FollowCharacter(cPlayer1);
+//		cRobber4.FollowCharacter(cPlayer1);
+//		cRobber5.FollowCharacter(cPlayer1);
+//		cRobber6.FollowCharacter(cPlayer1);
+	};
+};
+
+function ArrivedChar()
+{
+	printtoscreen("!!!!!!!!!!");
+	needToCheck = true;	
+}
+
+state HaveRobber()
+{ 
+	Conditions
+	{
+		if ( needToCheck == true && cPlayer1.DistanceTo(cRobber) > 1 )
+		{
+			cRobber.FollowCharacter( cPlayer1, .3, 1.6 );
+			needToCheck = false;				
+		}
+
+	}
+	
+	Actions
+	{
+		RegisterEvent("ArrivedAtTarget", "ArrivedChar", cRobber);
+	}
+}
+	
+Start();

@@ -1,0 +1,196 @@
+WorldLevel wlCity("Lego_City");
+WorldLevel wlTile("SF_Residential_1121");
+
+HotSpot hMissionStart("");
+
+Character cPlayer1("player1");
+Character cRobber("");
+
+Locator lRobberSpawn("");
+
+Text tChatType("Robber");
+
+
+/////////////////////////////////////////////////////////////////
+// Level Load
+/////////////////////////////////////////////////////////////////
+Function LevelEnter (WorldLevel level)
+{
+	
+	if ( level == wlCity )
+	{
+		if (!cPlayer1)
+		{
+			cPlayer1 = "player1";
+		};
+	};
+};
+
+Function LevelExit (WorldLevel level)
+{
+};
+
+
+/////////////////////////////////////////////////////////////////
+// Setup
+/////////////////////////////////////////////////////////////////
+
+
+State Setup()
+{
+	Conditions
+	{
+		if ( wlCity.IsLoaded() )
+		{
+			goto EnableHotspot();
+		};
+	};	
+	Actions
+	{
+	};
+};
+
+State EnableHotspot()
+{
+	Conditions
+	{
+	};	
+	Actions
+	{		
+		lRobberSpawn = "SF_RD_ATMSpawn";
+		hMissionStart = "HotSpot_SideMission_RobberChase";
+		MissionHotSpotEnable( hMissionStart );	
+		hMissionStart.SetIcon("Bonus"); 
+		goto AwaitTileLoad();
+	};
+};
+
+
+State AwaitTileLoad( )
+{
+	Conditions
+	{
+		if ( wlTile.IsLoaded() )
+		{
+			goto CreateRobber();
+		};
+	};
+	Actions
+	{
+		if ( cRobber )
+		{
+			cRobber.Kill();
+			cRobber = "";
+		};
+	};
+};
+
+State CreateRobber( )
+{
+	Conditions
+	{
+		if ( !wlTile.IsLoaded()  AND  cRobber )
+		{
+			goto AwaitTileLoad();
+		};
+	};
+	Actions
+	{
+		if ( !cRobber )
+		{
+			Number n(0);
+			n = lRobberSpawn.GetDirection();
+			cRobber = CreateAICharacter( "Robber", "Criminal", lRobberSpawn, n);
+		};
+	};
+};
+
+/////////////////////////////////////////////////////////////////
+// Cleanup
+/////////////////////////////////////////////////////////////////
+
+State Cleanup( )
+{
+	Actions
+	{
+		// cleanup stuff...
+		if ( hMissionStart )
+		{
+			hMissionStart.SetActive( false );
+		};
+		
+		if ( cRobber )
+		{
+			cRobber.Kill();
+			cRobber = "";
+		};
+		
+		// All tidy, let the game know...
+		MissionCleanupEnd();
+	};
+};
+
+
+//////////////////////////////////////////////////////////////
+// Mission
+//////////////////////////////////////////////////////////////
+
+State Begin( )
+{
+	Actions
+	{
+		cRobber.SetScript("SideMission_Robber_atm_a");
+		goto AwaitOutcome();
+	};
+};
+
+
+State AwaitOutcome( )
+{
+	Conditions
+	{
+		if ( cRobber )
+		{
+			if ( cRobber.InContext("handcuffed") )
+			{
+				goto RobberCaught();
+			}			
+			elseif ( cPlayer1.DistanceToXZ( cRobber ) > 100 )
+			{
+				goto RobberEscaped();
+			};
+		}
+		else
+		{
+			goto RobberEscaped();
+		};
+	};
+	Actions
+	{
+	};
+};
+
+
+State RobberCaught( )
+{
+	Conditions
+	{
+	};
+	Actions
+	{
+		Wait(1);
+		MissionComplete();
+	};
+};
+
+
+State RobberEscaped( )
+{
+	Conditions
+	{
+	};
+	Actions
+	{
+		MissionAbort();
+	};
+};

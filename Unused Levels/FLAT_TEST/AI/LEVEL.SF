@@ -1,0 +1,45 @@
+Vehicle cTrain1("TRAINS_CYDONIA_CAB1");
+Vehicle cTrain2("TRAINS_CYDONIA_CARRIAGE");
+Vehicle cTrain3("TRAINS_CYDONIA_CAB2");
+Character cop("Civilian_ChaseMcCain");
+
+State Base( )
+{
+	Conditions
+	{
+		if ( cTrain1 && cTrain2 && cTrain3)
+		{
+			goto SlaveSetup();
+		};
+	};
+};
+
+State SlaveSetup( )
+{
+	Conditions
+	{
+		if(cop && cop.InArea("Area001"))
+		{
+			PrintToScreen("InsideTheBox");		
+		};
+		if(cop && !cop.InArea("Area001"))
+		{
+			PrintToScreen("OutOfTheBox");		
+		};
+	};
+	Actions
+	{
+		cTrain1.AttachToSpline_YFree("Testing");
+		cTrain2.AttachToSpline_YFree("Testing");
+		cTrain3.AttachToSpline_YFree("Testing");
+		cTrain2.ConnectRailVehicles(cTrain3);
+		cTrain1.ConnectRailVehicles(cTrain2);
+		cTrain1.LockVelocityOfRailVehicle(true,2.0,3.0);
+		//Wait(15);
+		//cTrain2.ReleaseCarriage();
+		//Wait(10);
+		//cTrain1.ReleaseCarriage();
+	};
+};
+
+Base();

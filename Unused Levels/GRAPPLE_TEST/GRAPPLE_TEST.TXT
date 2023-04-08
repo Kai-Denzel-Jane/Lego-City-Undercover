@@ -1,0 +1,10 @@
+character "Cop" player
+character "Fireman" player
+character "farmer" resident
+character "miner" resident
+character "Astronaut" resident
+character "construction_legocityconstructionworker" resident
+character "robber" resident
+character "Civilian_ChaseMcCain" resident
+
+
